@@ -33,7 +33,7 @@ PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
-OBJS = $O/AccessPoint.o $O/Client.o $O/ClientRing.o
+OBJS = $O/AccessPoint.o $O/Client.o $O/ClientRing.o $O/utils.o
 
 # Message files
 MSGFILES =
