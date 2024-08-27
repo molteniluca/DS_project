@@ -1,39 +1,43 @@
-#include <omnetpp.h>
-
-using namespace omnetpp;
-
-class Client : public cSimpleModule
+class Client
 {
-  protected:
-    virtual void handleMessage(cMessage *msg) override;
-    virtual void initialize() override;
-    virtual void sendBroadcastMessage(std::string message);
-};
-
-Define_Module(Client);
-
-void Client::initialize()
-{
-    std::string schedName = "broadcast" + std::to_string(getIndex());
-    scheduleAt((double)getIndex(), new cMessage(schedName.c_str()));
+    private:
+        std::string name;
+        std::map<std::string, Room> rooms;
+    public:
+        createRoom(std::string room, std::vector<std::string> participants);
+        manageRoomCreation(RoomCreationMessage *msg);
+        manageMessage(SimpleMessage *msg);
 }
 
-void Client::handleMessage(cMessage *msg)
+Client::createRoom(std::string room, std::string type, std::vector<std::string> participants)
 {
-    if (msg->isSelfMessage()) {
-        // Send a broadcast message
-        sendBroadcastMessage(msg->getName());
+    Room room(room, participants);
+    rooms[room] = room;
+
+    return room.getMessageCreation();
+}
+
+Client::manageMessage(SimpleMessage *msg)
+{
+    if(rooms[msg->room].checkReceived(msg->vc)) {
+        EV << this->getName() << " - Message already received: " << msg->getName() << endl;
         delete msg;
-    } else {
-        // Received a message from access point, process it if needed
-        EV << "Client " << std::to_string(getIndex()) << " received message: " << msg->getName() << "\n";
-        delete msg;
+        return;
     }
+    rooms[msg->room].addReceived(msg->vc);
+    EV << this->getName() << " - Message received: " << msg->getName() << endl;
+    delete msg;
 }
 
-void Client::sendBroadcastMessage(std::string message)
+Client::manageRoomCreation(RoomCreationMessage *msg)
 {
-    // Create a new message to be broadcasted
-    cMessage *msg = new cMessage(message.c_str());
-    send(msg, "out");  // Send the message to access point
+    Room room(msg->room, msg->type, msg->participants);
+    rooms[room.name] = room;
+
+    SimpleMessage *new_msg = room.getMessageCreation();
+    send(new_msg, "out_left");
+    send(new_msg->dup(), "out_right");
+
+    EV << this->getName() << " - Sending message for room " << room << " creation" << endl;
 }
+
