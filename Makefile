@@ -22,7 +22,7 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(QTENV_LIBS) $(CMDENV_LIBS)
 INCLUDE_PATH =
 
 # Additional object and library files to link with
-EXTRA_OBJS =
+EXTRA_OBJS = $(patsubst %.cpp,$(O)/%.o,$(wildcard libraries/*.cpp)) $(patsubst %.cc,$(O)/%.o,$(wildcard libraries/*.cc)) $(patsubst %.c,$(O)/%.o,$(wildcard libraries/*.c))
 
 # Additional libraries (-L, -l options)
 LIBS =
@@ -33,7 +33,7 @@ PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
-OBJS = $O/AccessPoint.o $O/Client.o $O/ClientRing.o $O/utils.o
+OBJS = $(patsubst %.cpp,$(O)/%.o,$(wildcard ./*.cpp)) $(patsubst %.cc,$(O)/%.o,$(wildcard ./*.cc)) $(patsubst %.c,$(O)/%.o,$(wildcard ./*.c))
 
 # Message files
 MSGFILES =

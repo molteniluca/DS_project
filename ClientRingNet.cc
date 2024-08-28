@@ -29,8 +29,11 @@ void ClientRing::initialize()
 void ClientRing::handleMessage(cMessage *msg)
 {
     if(msg->isSelfMessage()) {
+        // Random event
         if(std::string(msg->getName()) == "create_room") {
-            cMessage *new_msg = client.createRoom("stanza", {"c2", "c4"});
+            // Create Room
+            cMessage *new_msg = client.createRoom("stanza", {this->getName(), "c2", "c4"}).getCmessage();
+            new_msg->addPar("timeToLive").setLongValue(10);
             send(new_msg, "out_left");
             send(new_msg->dup(), "out_right");
 
@@ -38,11 +41,20 @@ void ClientRing::handleMessage(cMessage *msg)
         }
         if(std::string(msg->getName()) == "send_msg") {
             if(uniform(0, 1) < 0.5) {
-                cMessage *new_msg = client.getMessage("msg text");
+                // Create Message
+                Message *msgToSend = client.getRandomMessage("msg text");
+                if(msgToSend == nullptr) {
+                    EV << this->getName() << " - No rooms available" << endl;
+                    scheduleAt(simTime()+100, new cMessage("send_msg"));
+                    return;
+                }
+                
+                cMessage *new_msg = msgToSend->getCmessage();
+                new_msg->addPar("timeToLive").setLongValue(10);
                 send(new_msg, "out_left");
                 send(new_msg->dup(), "out_right");
 
-                EV << this->getName() << " - Sending message to room " << room << endl;
+                EV << this->getName() << " - Sending message to room " << msgToSend->getRoomId() << endl;
             }
             scheduleAt(simTime()+100, new cMessage("send_msg"));
         }
@@ -50,31 +62,22 @@ void ClientRing::handleMessage(cMessage *msg)
         return;
     }
 
-/// TODO: sostituire con hop??
-    if(client.checkReceived(msg-)) {
-        EV << this->getName() << " - Message already received: " << msg->getName() << endl;
-        delete msg;
-        return;
+    MessageType mt = client.handleMessage(Message::createMessage(msg));
+    if(mt == ActionPerformed::CREATED_ROOM) {
+        EV << this->getName() << " - Room created: " << msg->getRoomId() << endl;
+    } else if(mt == MessageType::RECIVED_CHAT_MESSAGE) {
+        EV << this->getName() << " - Room: " << msg->getRoomId() << " - Message received: " << msg->getName() << endl;
+    } else if(mt == MessageType::DISCARDED_ALREADY_RECIVED_MESSAGE) {
+        EV << this->getName() << " - Room: " << msg->getRoomId() << " - Message already received: " << msg->getName() << endl;
     }
 
-    if(std::string(msg->getArrivalGate()->getName()) == "in_left")
-        send(msg, "out_right");
-    else if(std::string(msg->getArrivalGate()->getName()) == "in_right")
-        send(msg, "out_left");
-
-    EV << this->getName() << " - Message forwarded: " << msg->getName() << endl;    
-    
-    if(std::string(msg->par("type").stringValue()) == "room_creation") {        
-        std::vector<std::string> members = stringToVector(msg->par("members").stringValue());
-        if(std::find(members.begin(), members.end(), std::string(this->getName())) != members.end()) {
-            Room room(this->getName(), msg);
-            rooms[room.name] = room;
-            EV << this->getName() << "- Joining room: " << msg->par("roomName").stringValue() << endl;
-        }
-    }
-    
-    if(std::string(msg->par("type").stringValue()) == "msg" && std::find(rooms.begin(), rooms.end(), std::string(msg->par("room").stringValue())) != rooms.end()) {
-        EV << this->getName() << " - Message received: " << msg->getName() << endl;
+    if(msg->par("timeToLive").longValue() > 1) {
+        msg->setPar("timeToLive").setLongValue(msg->par("timeToLive").longValue() - 1);
+        if(std::string(msg->getArrivalGate()->getName()) == "in_left")
+            send(msg, "out_right");
+        else if(std::string(msg->getArrivalGate()->getName()) == "in_right")
+            send(msg, "out_left");
     }
 
+    EV << this->getName() << " - Message forwarded: " << msg->getName() << endl;
 }

@@ -1,52 +1,51 @@
-#include <iostream>
-#include <vector>
-#include <omnetpp.h>
-#include "utils.hh"
+#include "Room.hpp"
 
-class Room {
-public:
-    Room(int numParticipants) : numParticipants(numParticipants), vectorClock(numParticipants, 0) {}
+Room::Room(std::vector<std::string> participants, std::string adminId, std::string roomId) {
+    this->numParticipants = participants.size();
+    this->adminId = adminId;
+    this->roomId = roomId;
+    this->userId = adminId;
+    vectorClock.resize(numParticipants, 0);
+}
 
-    ChatMessage getMessage(const std::string& message) {
-        vectorClock[userId]++;
+std::string Room::getRoomId() {
+    return roomId;
+}
 
-        return ChatMessage(userId, roomId, message, vectorClock);
-    }
+RoomCreationMessage Room::getMessageCreation() {
+    return RoomCreationMessage(adminId, roomId, participants);
+}
 
-    Room Room(RoomCrestionMessage msg) {
-        adminId = msg.getAdminId();
-        roomId = msg.getRoomId();
-    }
+ChatMessage Room::getMessage(const std::string& message) {
+    vectorClock[userId]++;
 
-    void processMessage(ChatMessage *msg) {
-        std::vector<int> receivedVectorClock = msg.getVectorClock();
-        std::string message = msg.getContent();
-        int senderId = msg.getSenderId();
+    return ChatMessage(userId, roomId, message, vectorClock);
+}
 
-        std::cout << "Received message: " << message << " from user " << senderId << std::endl;
-    }
+Room::Room(RoomCreationMessage msg) {
+    adminId = msg.getAdminId();
+    roomId = msg.getRoomId();
+}
 
-    bool checkReceived(ChatMessage *msg) {
-        std::vector<int> receivedVectorClock = msg.getVectorClock();
-        int senderId = msg.getSenderId();
+void Room::processMessage(ChatMessage *msg) {
+    std::vector<int> receivedVectorClock = msg->getVectorClock();
+    std::string message = msg->getContent();
+    std::string senderId = msg->getSenderId();
 
-        for(int i = 0; i < numParticipants; i++) {
-            if(i != senderId) {
-                if(receivedVectorClock[i] > vectorClock[i]) {
-                    return false;
-                }
+    std::cout << "Received message: " << message << " from user " << senderId << std::endl;
+}
+
+bool Room::checkReceived(ChatMessage *msg) {
+    std::vector<int> receivedVectorClock = msg->getVectorClock();
+    int senderId = msg->getSenderId();
+
+    for(int i = 0; i < numParticipants; i++) {
+        if(participants[i] != senderId) {
+            if(receivedVectorClock[i] > vectorClock[i]) {
+                return false;
             }
         }
-
-        return true;
     }
 
-
-private:
-    int numParticipants;
-    int userId;
-    int adminId;
-    int roomId;
-    std::vector<int> vectorClock;   
-    std::vector<std::string> messages;
-};
+    return true;
+}
