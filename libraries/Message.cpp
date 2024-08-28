@@ -1,115 +1,82 @@
-#include <iostream>
-#include <vector>
-#include <omnetpp.h>
-#include "utils.hh"
+#include "Message.hpp"
 
+// #include <iostream>
 
-enum class MessageType {
-    CREATE_ROOM,
-    CHAT,
-    UNKNOWN
-};
-
-
-class Message {
-public:
-    static Message createMessage(const cMessage& msg) {
-        std::string type = std::string(msg->par("type").stringValue());
-        if (type == "message") {
-            std::string senderId = msg->par("idMsg")..stringValue();
-            std::string roomId = msg->par("roomId")..stringValue();
-            std::string content = std::string(msg->par("message").stringValue());
-            std::vector<int> vectorClock = msg->par("vectorClock").objectValue();
-            return ChatMessage(senderId, roomId, content, vectorClock);
-        } else if (type == "create_room") {
-            std::string adminId = msg->par("idMsg").stringValue();
-            std::string roomId = msg->par("roomId").stringValue();
-            std::vector<std::string> participants = msg->par("participants").objectValue();
-            return RoomCreationMessage(adminId, roomId, participants);
-        } else {
-            throw std::runtime_error("Unknown message type");
-        }
+Message* Message::createMessage(const omnetpp::cMessage& msg) {
+    std::string type = std::string(msg.par("type").stringValue());
+    if (type == "message") {
+        std::string senderId = msg.par("idMsg").stringValue();
+        std::string roomId = msg.par("roomId").stringValue();
+        std::string content = std::string(msg.par("message").stringValue());
+        std::vector<int> vectorClock = msg.par("vectorClock").objectValue();
+        return new ChatMessage(senderId, roomId, content, vectorClock);
+    } else if (type == "create_room") {
+        std::string adminId = msg.par("idMsg").stringValue();
+        std::string roomId = msg.par("roomId").stringValue();
+        std::vector<std::string> participants = msg.par("participants").objectValue();
+        return new RoomCreationMessage(adminId, roomId, participants);
+    } else {
+        throw std::runtime_error("Unknown message type");
     }
+}
 
-    virtual MessageType getType() const = 0;
-private:
-};
+RoomCreationMessage::RoomCreationMessage(std::string adminId, std::string roomId, std::vector<std::string> participants)
+    : adminId(adminId), roomId(roomId), participants(participants) {}
 
-class RoomCreationMessage : public Message {
-public:
-    RoomCreationMessage(std::string adminId, std::string roomId, std::vector<std::string> participants) : adminId(adminId), roomId(roomId), participants(participants) {}
+std::string RoomCreationMessage::getAdminId() const {
+    return adminId;
+}
 
-    std::string getAdminId() const {
-        return adminId;
-    }
+std::string RoomCreationMessage::getRoomId() const {
+    return roomId;
+}
 
-    std::string getRoomId() const {
-        return roomId;
-    }
+std::vector<std::string> RoomCreationMessage::getParticipants() const {
+    return participants;
+}
 
-    std::vector<std::string> getParticipants() const {
-        return participants;
-    }
+omnetpp::cMessage* RoomCreationMessage::getCmessage() const {
+    omnetpp::cMessage *msg = new omnetpp::cMessage("cosaèquesto");
+    msg->addPar("idMsg").setStringValue(adminId);
+    msg->addPar("type").setStringValue("create_room");
+    msg->addPar("roomId").setStringValue(roomId);
+    msg->addPar("participants").setObjectValue(participants);
+    return msg;
+}
 
-    void cMessage getCmessage() {
-        cMessage *msg = new cMessage("cosaèquesto");
-        msg->addPar("idMsg").setStringValue(adminId);
-        msg->addPar("type").setStringValue("create_room");
-        msg->addPar("roomId").setStringValue(roomId);
-        msg->addPar("participants").setObjectValue(participants);
-        
-        return msg;
-    }
+MessageType RoomCreationMessage::getType() const {
+    return MessageType::CREATE_ROOM;
+}
 
-    MessageType getType() const override {
-        return MessageType::CREATE_ROOM;
-    }
+ChatMessage::ChatMessage(std::string senderId, std::string roomId, const std::string& content, const std::vector<int>& vectorClock)
+    : senderId(senderId), roomId(roomId), content(content), vectorClock(vectorClock) {}
 
-private:
-    std::string adminId;
-    std::string roomId;
-    std::vector<std::string> participants;
-};
-    
+std::string ChatMessage::getSenderId() const {
+    return senderId;
+}
 
-class ChatMessage : public Message {
-public:
-    ChatMessage(std::string senderId, std::string roomId, const std::string& content, const std::vector<int>& vectorClock) : senderId(senderId), roomId(roomId), content(content), vectorClock(vectorClock) {}
+std::string ChatMessage::getRoomId() const {
+    return roomId;
+}
 
-    std::string getSenderId() const {
-        return senderId;
-    }
+const std::string& ChatMessage::getContent() const {
+    return content;
+}
 
-    std::string getRoomId() const {
-        return roomId;
-    }
+const std::vector<int>& ChatMessage::getVectorClock() const {
+    return vectorClock;
+}
 
-    const std::string& getContent() const {
-        return content;
-    }
+omnetpp::cMessage* ChatMessage::getCmessage() const {
+    omnetpp::cMessage *msg = new omnetpp::cMessage("cosaèquesto");
+    msg->addPar("idMsg").setStringValue(senderId);
+    msg->addPar("type").setStringValue("message");
+    msg->addPar("roomId").setStringValue(roomId);
+    msg->addPar("vectorClock").setObjectValue(vectorClock);
+    msg->addPar("message").setStringValue(content.c_str());
+    return msg;
+}
 
-    const std::vector<int>& getVectorClock() const {
-        return vectorClock;
-    }
-
-    void cMessage getCmessage() {
-        cMessage *msg = new cMessage("cosaèquesto");
-        msg->addPar("idMsg").setStringValue(userId);
-        msg->addPar("type").setStringValue("message");
-        msg->addPar("roomId").setStringValue(roomId);
-        msg->addPar("vectorClock").setObjectValue(vectorClock);
-        msg->addPar("message").setStringValue(message.c_str());
-        
-        return msg;
-    }
-
-    MessageType getType() const override {
-        return MessageType::CHAT;
-    }
-    
-private:
-    std::string senderId;
-    std::string roomId;
-    std::string content;
-    std::vector<int> vectorClock;
-};
+MessageType ChatMessage::getType() const {
+    return MessageType::CHAT;
+}

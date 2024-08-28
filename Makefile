@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for DS_project
 #
 # This file was generated with the command:
-#  opp_makemake -f
+#  opp_makemake -f --deep
 #
 
 # Name of target to be created (-o option)
@@ -22,7 +22,7 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(QTENV_LIBS) $(CMDENV_LIBS)
 INCLUDE_PATH =
 
 # Additional object and library files to link with
-EXTRA_OBJS = $(patsubst %.cpp,$(O)/%.o,$(wildcard libraries/*.cpp)) $(patsubst %.cc,$(O)/%.o,$(wildcard libraries/*.cc)) $(patsubst %.c,$(O)/%.o,$(wildcard libraries/*.c))
+EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
 LIBS =
@@ -32,8 +32,8 @@ PROJECT_OUTPUT_DIR = out
 PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
-# Object files for local .cc, .msg and .sm files
-OBJS = $(patsubst %.cpp,$(O)/%.o,$(wildcard ./*.cpp)) $(patsubst %.cc,$(O)/%.o,$(wildcard ./*.cc)) $(patsubst %.c,$(O)/%.o,$(wildcard ./*.c))
+# Object files for local .cpp, .msg and .sm files
+OBJS = $O/ClientRing.o $O/libraries/Client.o $O/libraries/Message.o $O/libraries/Room.o $O/libraries/utils.o
 
 # Message files
 MSGFILES =
@@ -98,20 +98,20 @@ $O/$(TARGET): $(OBJS)  $(wildcard $(EXTRA_OBJS)) Makefile $(CONFIGFILE)
 
 # disabling all implicit rules
 .SUFFIXES :
-.PRECIOUS : %_m.h %_m.cc
+.PRECIOUS : %_m.h %_m.cpp
 
-$O/%.o: %.cc $(COPTS_FILE) | msgheaders smheaders
+$O/%.o: %.cpp $(COPTS_FILE) | msgheaders smheaders
 	@$(MKPATH) $(dir $@)
 	$(qecho) "$<"
 	$(Q)$(CXX) -c $(CXXFLAGS) $(COPTS) -o $@ $<
 
-%_m.cc %_m.h: %.msg
+%_m.cpp %_m.h: %.msg
 	$(qecho) MSGC: $<
-	$(Q)$(MSGC) -s _m.cc -MD -MP -MF $O/$(basename $<)_m.h.d $(MSGCOPTS) $?
+	$(Q)$(MSGC) -s _m.cpp -MD -MP -MF $O/$(basename $<)_m.h.d $(MSGCOPTS) $?
 
-%_sm.cc %_sm.h: %.sm
+%_sm.cpp %_sm.h: %.sm
 	$(qecho) SMC: $<
-	$(Q)$(SMC) -c++ -suffix cc $(SMCOPTS) $?
+	$(Q)$(SMC) -c++ -suffix cpp $(SMCOPTS) $?
 
 msgheaders: $(MSGFILES:.msg=_m.h)
 
@@ -121,7 +121,7 @@ clean:
 	$(qecho) Cleaning $(TARGET)
 	$(Q)-rm -rf $O
 	$(Q)-rm -f $(TARGET_FILES)
-	$(Q)-rm -f $(call opp_rwildcard, . , *_m.cc *_m.h *_sm.cc *_sm.h)
+	$(Q)-rm -f $(call opp_rwildcard, . , *_m.cpp *_m.h *_sm.cpp *_sm.h)
 
 cleanall:
 	$(Q)$(CLEANALL_COMMAND)

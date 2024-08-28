@@ -1,12 +1,9 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
-#include <iostream>
 #include <vector>
 #include <string>
-#include <stdexcept>
 #include <omnetpp.h>
-#include "utils.hh"
 
 enum class MessageType {
     CREATE_ROOM,
@@ -16,9 +13,10 @@ enum class MessageType {
 
 class Message {
 public:
-    static Message createMessage(const cMessage& msg);
+    static Message* createMessage(const omnetpp::cMessage& msg);
 
     virtual MessageType getType() const = 0;
+    virtual omnetpp::cMessage* getCmessage() const = 0;
 };
 
 class RoomCreationMessage : public Message {
@@ -29,7 +27,7 @@ public:
     std::string getRoomId() const;
     std::vector<std::string> getParticipants() const;
 
-    cMessage getCmessage() const;
+    omnetpp::cMessage* getCmessage() const override;
 
     MessageType getType() const override;
 
@@ -48,7 +46,7 @@ public:
     const std::string& getContent() const;
     const std::vector<int>& getVectorClock() const;
 
-    cMessage getCmessage() const;
+    omnetpp::cMessage* getCmessage() const override;
 
     MessageType getType() const override;
 

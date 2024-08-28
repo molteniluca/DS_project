@@ -5,6 +5,15 @@ Room::Room(std::vector<std::string> participants, std::string adminId, std::stri
     this->adminId = adminId;
     this->roomId = roomId;
     this->userId = adminId;
+    this->participants = participants;
+    vectorClock.resize(numParticipants, 0);
+}
+
+Room::Room(RoomCreationMessage msg, std::string userId) {
+    this->numParticipants = msg.getParticipants().size();
+    this->adminId = msg.getAdminId();
+    this->roomId = msg.getRoomId();
+    this->userId = userId;
     vectorClock.resize(numParticipants, 0);
 }
 
@@ -12,19 +21,18 @@ std::string Room::getRoomId() {
     return roomId;
 }
 
-RoomCreationMessage Room::getMessageCreation() {
-    return RoomCreationMessage(adminId, roomId, participants);
+std::vector<std::string> Room::getParticipants() {
+    return participants;
 }
 
-ChatMessage Room::getMessage(const std::string& message) {
+RoomCreationMessage* Room::getMessageCreation() {
+    return new RoomCreationMessage(adminId, roomId, participants);
+}
+
+ChatMessage* Room::getMessage(const std::string& message) {
     vectorClock[userId]++;
 
-    return ChatMessage(userId, roomId, message, vectorClock);
-}
-
-Room::Room(RoomCreationMessage msg) {
-    adminId = msg.getAdminId();
-    roomId = msg.getRoomId();
+    return new ChatMessage(userId, roomId, message, vectorClock);
 }
 
 void Room::processMessage(ChatMessage *msg) {

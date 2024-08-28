@@ -4,20 +4,22 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <omnetpp.h>
-#include "utils.hh"
+
+#include "Message.hpp"
 
 class Room {
 public:
     Room(std::vector<std::string> participants, std::string adminId, std::string roomId);
 
+    Room(RoomCreationMessage msg);
+
     std::string getRoomId();
 
-    RoomCreationMessage getMessageCreation();
+    std::vector<std::string> getParticipants();
 
-    ChatMessage getMessage(const std::string& message);
+    RoomCreationMessage* getMessageCreation();
 
-    Room(RoomCreationMessage msg);
+    ChatMessage* getMessage(const std::string& message);
 
     void processMessage(ChatMessage *msg);
 
