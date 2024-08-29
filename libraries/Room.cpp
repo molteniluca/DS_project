@@ -25,6 +25,12 @@ Room::Room(RoomCreationMessage msg, std::string userId) {
     this->roomId = msg.getRoomId();
     this->participants = msg.getParticipants();
     this->userId = userId;
+
+    this->userIndex = lookupUserIndex(userId);
+    if(userIndex == -1) {
+        throw std::runtime_error("User not found in participants");
+    }
+
     vectorClock.resize(numParticipants, 0);
 }
 
@@ -60,28 +66,16 @@ RoomCreationMessage* Room::getMessageCreation() {
 }
 
 ChatMessage* Room::getMessage(const std::string& message) {
-    std::cout << this->userId << " - Room::getMessage - AAAAAAAAAAAAAAAAAAAAAAAAAAAA" << std::endl;
-    std::cout.flush();
-
     vectorClock[userIndex]++;
-<<<<<<< HEAD
-
-    std::cout << this->userId << " - Room::getMessage - BBBBBBBBBBBBBBBBBBBBBBBBBBBB" << std::endl;
-    std::cout.flush();
-
-=======
->>>>>>> d1cf15301b93042635fcf6062ef75cc074ed33f6
+    
     return new ChatMessage(userId, roomId, message, vectorClock);
-
-    std::cout << this->userId << " - Room::getMessage - CCCCCCCCCCCCCCCCCCCCCCCCCCC" << std::endl;
-    std::cout.flush();
 }
 
 void Room::displayMessage(ChatMessage *msg){
     std::string message = msg->getContent();
     std::string senderId = msg->getSenderId();
-    /// TODO: stampa sempre c0 come sender???
-    std::cout << this->userId << " - Received message: " << message << " from user " << senderId << std::endl;
+
+    std::cout << this->userId << " - " << this->roomId << " - Displayed message: " << message << " from user " << senderId << std::endl;
 }
 
 void Room::processMessage(ChatMessage *msg) {
