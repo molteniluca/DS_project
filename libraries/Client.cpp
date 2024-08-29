@@ -22,6 +22,9 @@ ChatMessage* Client::getRandomMessage(std::string text) {
         return nullptr;
     }
 
+    std::cout << this->userId << " - handleEvent_SendMessage - AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << std::endl;
+    std::cout.flush();
+
     // Generate a random index
     int randomIndex = std::rand() % rooms.size();
 

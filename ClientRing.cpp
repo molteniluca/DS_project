@@ -75,6 +75,7 @@ void ClientRing::handleUserEvent(cMessage *msg)
             break;
 
         case UserEvent::SEND_MESSAGE:
+        
             if(uniform(0, 1) < 0.5) {
                 handleEvent_SendMessage();
             }
@@ -119,7 +120,6 @@ void ClientRing::handleEvent_RoomCreation()
 
 void ClientRing::handleEvent_SendMessage()
 {
-    cMessage *cMsg = nullptr;
     ChatMessage *msg = client->getRandomMessage("msg text");
 
     if(msg == nullptr) {
@@ -128,7 +128,7 @@ void ClientRing::handleEvent_SendMessage()
         return;
     }
 
-    cMsg = msg->getCmessage();
+    cMessage *cMsg = msg->getCmessage();
     cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
     send(cMsg, "out_left");
     send(cMsg->dup(), "out_right");

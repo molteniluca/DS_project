@@ -54,9 +54,18 @@ RoomCreationMessage* Room::getMessageCreation() {
 }
 
 ChatMessage* Room::getMessage(const std::string& message) {
+    std::cout << this->userId << " - Room::getMessage - AAAAAAAAAAAAAAAAAAAAAAAAAAAA" << std::endl;
+    std::cout.flush();
+
     vectorClock[userIndex]++;
 
+    std::cout << this->userId << " - Room::getMessage - BBBBBBBBBBBBBBBBBBBBBBBBBBBB" << std::endl;
+    std::cout.flush();
+
     return new ChatMessage(userId, roomId, message, vectorClock);
+
+    std::cout << this->userId << " - Room::getMessage - CCCCCCCCCCCCCCCCCCCCCCCCCCC" << std::endl;
+    std::cout.flush();
 }
 
 void Room::processMessage(ChatMessage *msg) {
