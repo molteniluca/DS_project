@@ -67,7 +67,7 @@ void Room::processMessage(ChatMessage *msg) {
     /// TODO: manca logica per mettere messaggi in coda e processarli in ordine in base ai vector clock
 
     /// TODO: stampa sempre c0 come sender???
-    std::cout << "Received message: " << message << " from user " << senderId << std::endl;
+    std::cout << this->userId << " - Received message: " << message << " from user " << senderId << std::endl;
 }
 
 bool Room::checkReceived(ChatMessage *msg) {

@@ -5,94 +5,179 @@
 
 #include "libraries/Client.hpp"
 #include "libraries/Message.hpp"
-#include "libraries/Room.hpp"
+#include "libraries/UserEvent.hpp"
+#include "libraries/utils.hpp"
 
 using namespace omnetpp;
 
 class ClientRing : public cSimpleModule
 {
+    public:
+        ClientRing();
+
+    protected:
+        virtual void initialize() override;
+        virtual void handleMessage(cMessage *msg) override;
+
     private:
         Client * client;
-    protected:
-        virtual void handleMessage(cMessage *msg) override;
-        virtual void initialize() override;
-    public:
-        ClientRing() : cSimpleModule(), client(nullptr) {}
+        int timeToLive;
+        int personalRoomId; // Used to create unique room ids
+
+        void handleUserEvent(cMessage *msg);
+        void handleEvent_RoomCreation();
+        void handleEvent_SendMessage();
+
+        void handleReceivedMessage(cMessage *msg);
+        void forwardMessage(cMessage *msg);
 };
 
 Define_Module(ClientRing);
 
+ClientRing::ClientRing() : cSimpleModule(), personalRoomId(0), client(nullptr), timeToLive(-1) {}
+
 void ClientRing::initialize()
 {
-    client = new Client(std::string(this->getName()));
-    if(std::string(this->getName()) == "c0") {
-        scheduleAt(simTime()+1, new cMessage("create_room"));
-    }
-    scheduleAt(simTime()+100, new cMessage("send_msg"));
+    client = new Client(std::string(this->getFullName()));
+    timeToLive = getParentModule()->par("numClients").intValue() / 2;
+    scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
+    scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
 }
 
 void ClientRing::handleMessage(cMessage *msg)
 {
+    if(msg == nullptr) {
+        return;
+    }
+    
     if(msg->isSelfMessage()) {
-        // Random event
-        if(std::string(msg->getName()) == "create_room") {
-            // Create Room
-            cMessage *new_msg = client->createRoom("stanza", {this->getName(), "c2", "c4"})->getCmessage();
-            new_msg->addPar("timeToLive").setLongValue(5);
-            send(new_msg, "out_left");
-            send(new_msg->dup(), "out_right");
-            // delete new_msg;
-
-            EV << this->getName() << " - Sending room creation: stanza with: " << this->getName() << ", c2, c4" << endl;
-        }
-        if(std::string(msg->getName()) == "send_msg" && uniform(0, 1) < 0.5) {
-            // Create Message
-            ChatMessage *msgToSend = client->getRandomMessage("msg text");
-            if(msgToSend == nullptr) {
-                EV << this->getName() << " - No rooms available" << endl;
-                scheduleAt(simTime()+100, new cMessage("send_msg"));
-                goto doNotSend;
-            }
-            cMessage *new_msg = msgToSend->getCmessage();
-            new_msg->addPar("timeToLive").setLongValue(5);
-            send(new_msg, "out_left");
-            send(new_msg->dup(), "out_right");
-
-            delete msgToSend;
-            // delete new_msg;
-
-            EV << this->getName() << " - Sending message to room " << msgToSend->getRoomId() << endl;
-        }
-        doNotSend:
-            scheduleAt(simTime()+100, new cMessage("send_msg"));
-            delete msg;
-            return;
+        handleUserEvent(msg);
+        return;
     }
 
+    handleReceivedMessage(msg);
+
+    forwardMessage(msg);
+
+    return;
+}
+
+void ClientRing::handleUserEvent(cMessage *msg)
+{
+    UserEvent re = ue_fromString(msg->getName());
+    switch(re) {
+
+        case UserEvent::CREATE_ROOM:
+            if(uniform(0, 1) < 0.2) {
+                handleEvent_RoomCreation();
+            }
+            scheduleAt(simTime() + uniform(1000, 5000), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
+            break;
+
+        case UserEvent::SEND_MESSAGE:
+            if(uniform(0, 1) < 0.5) {
+                handleEvent_SendMessage();
+            }
+            scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
+            break;
+
+        default:
+            break;
+    }
+
+    delete msg;
+    return;
+}
+
+void ClientRing::handleEvent_RoomCreation()
+{
+    int numClients = getParentModule()->par("numClients").intValue();
+    int numMembers = intuniform(2, numClients);
+    std::vector<std::string> members;
+    members.push_back(this->getFullName());
+    while(members.size() < numMembers) {
+        std::string clientName = "client[" + std::to_string(intuniform(0, numClients-1)) + "]";
+        if(std::find(members.begin(), members.end(), clientName) == members.end()) {
+            members.push_back(clientName);
+        }
+    }
+
+    std::string roomId = "stanza(" + std::string(this->getFullName()) + ", " + std::to_string(this->personalRoomId++) + ")";
+    RoomCreationMessage *msg = client->createRoom(roomId, members);
+
+    cMessage *cMsg = msg->getCmessage();
+    cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+    send(cMsg, "out_left");
+    send(cMsg->dup(), "out_right");
+
+    EV << this->getFullName() << " - Sent room creation: " << roomId << " with: " << vectorOfStrings_to_String(members) << endl;
+    std::cout << this->getFullName() << " - Sent room creation: " << roomId << " with: " << vectorOfStrings_to_String(members) << std::endl;
+
+    delete msg;
+    return;
+}
+
+void ClientRing::handleEvent_SendMessage()
+{
+    cMessage *cMsg = nullptr;
+    ChatMessage *msg = client->getRandomMessage("msg text");
+
+    if(msg == nullptr) {
+        EV << this->getFullName() << " - No rooms available" << endl;
+        std::cout << this->getFullName() << " - No rooms available" << std::endl;
+        return;
+    }
+
+    cMsg = msg->getCmessage();
+    cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+    send(cMsg, "out_left");
+    send(cMsg->dup(), "out_right");
+
+    EV << this->getFullName() << " - Sending message to room " << msg->getRoomId() << endl;
+    std::cout << this->getFullName() << " - Sending message to room " << msg->getRoomId() << std::endl;
+
+    delete msg;
+    return;
+}
+
+void ClientRing::handleReceivedMessage(cMessage *msg)
+{
     ActionPerformed ap = client->handleMessage(Message::createMessage(*msg));
     if(ap == ActionPerformed::CREATED_ROOM) {
-        EV << this->getName() << " - Room created: " << msg->par("roomId").stringValue() << endl;
-    } else if(ap == ActionPerformed::RECIVED_CHAT_MESSAGE) {
-        EV << this->getName() << " - Room: " << msg->par("roomId").stringValue() << " - Message received: " << msg->par("message").stringValue() << endl;
-    } else if(ap == ActionPerformed::DISCARDED_ALREADY_RECIVED_MESSAGE) {
-        EV << this->getName() << " - Room: " << msg->par("roomId").stringValue() << " - Message already received: " << endl;
+        EV << this->getFullName() << " - Room created: " << msg->par("roomId").stringValue() << endl;
+        std::cout << this->getFullName() << " - Room created: " << msg->par("roomId").stringValue() << std::endl;
+    } else if(ap == ActionPerformed::RECEIVED_CHAT_MESSAGE) {
+        EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message received: " << msg->par("message").stringValue() << endl;
+        std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message received: " << msg->par("message").stringValue() << std::endl;
+    } else if(ap == ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE) {
+        EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message already received: " << endl;
+        std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message already received: " << std::endl;
+    } else if(ap == ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE) {
+        EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message discarded for I'm not a recipient: " << endl;
+        std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message discarded for I'm not a recipient: " << std::endl;
     }
 
+    return;
+}
+
+void ClientRing::forwardMessage(cMessage *msg)
+{
     if(msg->par("timeToLive").longValue() > 1) {
         msg->par("timeToLive").setLongValue(msg->par("timeToLive").longValue() - 1);
         if(std::string(msg->getArrivalGate()->getName()) == "in_left")
             send(msg, "out_right");
         else if(std::string(msg->getArrivalGate()->getName()) == "in_right")
             send(msg, "out_left");
+        
+        EV << this->getFullName() << " - Message forwarded: " << msg->getName() << " - Time to live: " << msg->par("timeToLive").longValue() << endl;
+        std::cout << this->getFullName() << " - Message forwarded: " << msg->getName() << " - Time to live: " << msg->par("timeToLive").longValue() << std::endl;
+
+        return;
     }
     else {
-        EV << this->getName() << " - time to live = 0 for message: " << msg->getName() << endl;
+        EV << this->getFullName() << " - time to live = 0 for message: " << msg->getName() << endl;
+        std::cout << this->getFullName() << " - time to live = 0 for message: " << msg->getName() << std::endl;
         delete msg;
         return;
     }
-
-    EV << this->getName() << " - Message forwarded: " << msg->getName() << " - Time to live: " << msg->par("timeToLive").longValue() << endl;
-
-    // delete msg;
-    return;
 }
