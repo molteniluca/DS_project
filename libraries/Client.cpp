@@ -42,8 +42,6 @@ void Client::handleRoomCreation(RoomCreationMessage *msg) {
 }
 
 void Client::handleChatMessage(ChatMessage *msg) {
-    if (rooms.find(msg->getRoomId()) == rooms.end())
-        return;
     rooms[msg->getRoomId()].processMessage(msg);
 }
 
@@ -67,6 +65,7 @@ ActionPerformed Client::handleMessage(Message *msg) {
             return ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE;
         }
         handleChatMessage(chatMsg);
+        /// TODO: differentiate between displayed and queued messages
         return ActionPerformed::RECEIVED_CHAT_MESSAGE;
     }
 
