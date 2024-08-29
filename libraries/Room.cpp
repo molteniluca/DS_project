@@ -2,6 +2,8 @@
 
 #include <iostream> // For cout
 
+#include "utils.hpp"
+
 Room::Room(std::vector<std::string> participants, std::string adminId, std::string roomId) {
     this->numParticipants = participants.size();
     this->adminId = adminId;
@@ -9,13 +11,7 @@ Room::Room(std::vector<std::string> participants, std::string adminId, std::stri
     this->userId = adminId;
     this->participants = participants;
     
-    this->userIndex = -1;
-    for(int i = 0; i < numParticipants; i++) {
-        if(participants[i] == userId) {
-            this->userIndex = i;
-            break;
-        }
-    }
+    this->userIndex = lookupUserIndex(userId);
     if(userIndex == -1) {
         throw std::runtime_error("User not found in participants");
     }
@@ -41,6 +37,16 @@ Room::Room() {
     vectorClock = {};
 }
 
+int Room::lookupUserIndex(const std::string& userId) {
+    for(int i = 0; i < numParticipants; i++) {
+        if(participants[i] == userId) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 std::string Room::getRoomId() {
     return roomId;
 }
@@ -55,22 +61,38 @@ RoomCreationMessage* Room::getMessageCreation() {
 
 ChatMessage* Room::getMessage(const std::string& message) {
     vectorClock[userIndex]++;
-
     return new ChatMessage(userId, roomId, message, vectorClock);
 }
 
-void Room::processMessage(ChatMessage *msg) {
-    std::vector<int> receivedVectorClock = msg->getVectorClock();
+void Room::displayMessage(ChatMessage *msg){
     std::string message = msg->getContent();
     std::string senderId = msg->getSenderId();
-
-    /// TODO: manca logica per mettere messaggi in coda e processarli in ordine in base ai vector clock
-
     /// TODO: stampa sempre c0 come sender???
     std::cout << "Received message: " << message << " from user " << senderId << std::endl;
 }
 
-bool Room::checkReceived(ChatMessage *msg) {
+void Room::processMessage(ChatMessage *msg) {
+    std::vector<int> receivedVectorClock = msg->getVectorClock();
+    std::string senderId = msg->getSenderId();
+    if(canBeReceived(receivedVectorClock, vectorClock, lookupUserIndex(senderId))) {
+        displayMessage(msg);
+        flushMessages();
+    }else{
+        messagesQueue.insert(std::make_pair(receivedVectorClock, *msg));
+    }
+}
+
+
+void Room::flushMessages() {
+    for(auto it = messagesQueue.begin(); it != messagesQueue.end(); it++) {
+        std::vector<int> receivedVectorClock = it->first;
+        ChatMessage messdage = it->second;
+
+        
+    }
+}
+
+bool Room::checkPrinted(ChatMessage *msg) {
     std::vector<int> receivedVectorClock = msg->getVectorClock();
     std::string senderId = msg->getSenderId();
 
@@ -83,4 +105,13 @@ bool Room::checkReceived(ChatMessage *msg) {
     }
 
     return false;
+}
+
+bool Room::checkReceived(ChatMessage *msg) {
+    if (checkPrinted(msg)) {
+        return true;
+    }
+    std::vector<int> receivedVectorClock = msg->getVectorClock();
+
+    return messagesQueue.find(receivedVectorClock) != messagesQueue.end();
 }

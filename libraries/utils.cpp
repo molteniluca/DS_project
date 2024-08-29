@@ -28,16 +28,14 @@ std::vector<std::string> string_to_vectorOfStrings(const std::string& str) {
 }
 
 std::string vectorOfInts_to_String(const std::vector<int>& vec) {
-    std::ostringstream oss;
-    if (!vec.empty())
-    {
-        std::transform(vec.begin(), vec.end(), std::ostream_iterator<std::string>(oss, ","), [](int num) {
-            return std::to_string(num);
-        });
-        oss << std::to_string(vec.back());
+    std::string stringa;
+    for (int i = 0; i < vec.size(); i++) {
+        stringa += std::to_string(vec[i]);
+        if (i != vec.size() - 1) {
+            stringa += ",";
+        }
     }
-    // std::cout << "vettore" << vec[0] << ',' << vec[1] << ',' << vec[2] << "convertito in: " << oss.str() << std::endl;
-    return oss.str();
+    return stringa;
 }
 
 std::vector<int> string_to_vectorOfInts(const std::string& str) {
@@ -49,4 +47,22 @@ std::vector<int> string_to_vectorOfInts(const std::string& str) {
         vec.push_back(std::stoi(item));
     }
     return vec;
+}
+
+bool canBeReceived(const std::vector<int>& received, const std::vector<int>& localVector, int senderId){
+    if(received.size()!=localVector.size())
+        throw std::runtime_error("Size mismatch!");
+    
+    if (received[senderId]==localVector[senderId]+1){
+        for(int i=0; i<received.size(); i++){
+            if(senderId!=i){
+                if(received[i]>localVector[i]){
+                    return false;
+                }
+            }
+        }
+        return true;
+    } else{
+        return false;
+    }
 }

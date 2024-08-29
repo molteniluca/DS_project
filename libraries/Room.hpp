@@ -27,6 +27,14 @@ public:
 
     bool checkReceived(ChatMessage *msg);
 
+    bool checkPrinted(ChatMessage *msg);
+
+    void flushMessages();
+
+    void displayMessage(ChatMessage *msg);
+
+    int lookupUserIndex(const std::string& userId);
+
 private:
     int numParticipants;
     int userIndex;
@@ -36,6 +44,7 @@ private:
     std::vector<std::string> participants;
     std::vector<int> vectorClock;   
     std::vector<std::string> messages;
+    std::map<std::vector<int>, ChatMessage> messagesQueue;
 };
 
 #endif // ROOM_HPP
