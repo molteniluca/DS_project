@@ -36,7 +36,7 @@ std::vector<std::string> RoomCreationMessage::getParticipants() const {
 }
 
 omnetpp::cMessage* RoomCreationMessage::getCmessage() const {
-    omnetpp::cMessage *msg = new omnetpp::cMessage("crea_stanza");
+    omnetpp::cMessage *msg = new omnetpp::cMessage(("creation of room " + roomId).c_str());
     msg->addPar("senderId").setStringValue(adminId.c_str());
     msg->addPar("type").setStringValue("create_room");
     msg->addPar("roomId").setStringValue(roomId.c_str());
@@ -68,7 +68,7 @@ const std::vector<int>& ChatMessage::getVectorClock() const {
 }
 
 omnetpp::cMessage* ChatMessage::getCmessage() const {
-    omnetpp::cMessage *msg = new omnetpp::cMessage("messaggio");
+    omnetpp::cMessage *msg = new omnetpp::cMessage(("message from " + senderId + " to " + roomId).c_str());
     msg->addPar("senderId").setStringValue(senderId.c_str());
     msg->addPar("type").setStringValue("message");
     msg->addPar("roomId").setStringValue(roomId.c_str());
