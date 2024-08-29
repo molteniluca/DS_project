@@ -84,11 +84,20 @@ void Room::processMessage(ChatMessage *msg) {
 
 
 void Room::flushMessages() {
-    for(auto it = messagesQueue.begin(); it != messagesQueue.end(); it++) {
-        std::vector<int> receivedVectorClock = it->first;
-        ChatMessage messdage = it->second;
+    bool found = true;
+    while (found){
+        found = false;
+        for(auto it = messagesQueue.begin(); it != messagesQueue.end(); it++) {
+            std::vector<int> receivedVectorClock = it->first;
+            ChatMessage message = it->second;
 
-        
+            if (canBeReceived(receivedVectorClock, vectorClock, lookupUserIndex(message.getSenderId()))) {
+                displayMessage(&message);
+                messagesQueue.erase(it);
+                found = true;
+                break;
+            }
+        }
     }
 }
 
