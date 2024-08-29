@@ -68,7 +68,7 @@ void Room::displayMessage(ChatMessage *msg){
     std::string message = msg->getContent();
     std::string senderId = msg->getSenderId();
     /// TODO: stampa sempre c0 come sender???
-    std::cout << "Received message: " << message << " from user " << senderId << std::endl;
+    std::cout << this->userId << " - Received message: " << message << " from user " << senderId << std::endl;
 }
 
 void Room::processMessage(ChatMessage *msg) {

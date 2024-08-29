@@ -33,7 +33,13 @@ PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cpp, .msg and .sm files
-OBJS = $O/ClientRing.o $O/libraries/Client.o $O/libraries/Message.o $O/libraries/Room.o $O/libraries/utils.o
+OBJS = \
+    $O/ClientRing.o \
+    $O/libraries/Client.o \
+    $O/libraries/Message.o \
+    $O/libraries/Room.o \
+    $O/libraries/UserEvent.o \
+    $O/libraries/utils.o
 
 # Message files
 MSGFILES =

@@ -2,7 +2,8 @@
 
 #include <cstdlib> // For rand() and srand()
 #include <ctime>   // For time()
-#include <algorithm> // For find
+#include <algorithm> // For find()
+#include <stdexcept> // For invalid_argument exception
 
 Client::Client(std::string userId) : userId(userId) {
     // Seed the random number generator
@@ -51,23 +52,23 @@ ActionPerformed Client::handleMessage(Message *msg) {
         RoomCreationMessage *roomMsg = dynamic_cast<RoomCreationMessage*>(msg);
         std::vector<std::string> participants = roomMsg->getParticipants();
         if(std::find(participants.begin(), participants.end(), userId) == participants.end()){
-            return ActionPerformed::DISCARDED_NON_RECIVER_MESSAGE;
+            return ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE;
         }
         if(rooms.find(roomMsg->getRoomId()) != rooms.end())
-            return ActionPerformed::DISCARDED_ALREADY_RECIVED_MESSAGE;
+            return ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE;
         handleRoomCreation(roomMsg);
         return ActionPerformed::CREATED_ROOM;
     }
     if (msg->getType() == MessageType::CHAT) {
         ChatMessage* chatMsg = dynamic_cast<ChatMessage*>(msg);
         if(rooms.find(chatMsg->getRoomId()) == rooms.end())
-            return ActionPerformed::DISCARDED_NON_RECIVER_MESSAGE;
+            return ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE;
         if (rooms[chatMsg->getRoomId()].checkReceived(chatMsg)) {
-            return ActionPerformed::DISCARDED_ALREADY_RECIVED_MESSAGE;
+            return ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE;
         }
         handleChatMessage(chatMsg);
-        return ActionPerformed::RECIVED_CHAT_MESSAGE;
+        return ActionPerformed::RECEIVED_CHAT_MESSAGE;
     }
 
-    return ActionPerformed::DISCARDED_ALREADY_RECIVED_MESSAGE;
+    throw std::invalid_argument("Invalid message type");
 }
