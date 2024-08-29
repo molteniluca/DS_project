@@ -1,19 +1,19 @@
 #include "Message.hpp"
 
-// #include <iostream>
+#include "utils.hpp"
 
-Message* Message::createMessage(const omnetpp::cMessage& msg) {
+Message* Message::createMessage(omnetpp::cMessage& msg) {
     std::string type = std::string(msg.par("type").stringValue());
     if (type == "message") {
-        std::string senderId = msg.par("idMsg").stringValue();
-        std::string roomId = msg.par("roomId").stringValue();
+        std::string senderId = std::string(msg.par("senderId").stringValue());
+        std::string roomId = std::string(msg.par("roomId").stringValue());
         std::string content = std::string(msg.par("message").stringValue());
-        std::vector<int> vectorClock = msg.par("vectorClock").objectValue();
+        std::vector<int> vectorClock = string_to_vectorOfInts(std::string(msg.par("vectorClock").stringValue()));
         return new ChatMessage(senderId, roomId, content, vectorClock);
     } else if (type == "create_room") {
-        std::string adminId = msg.par("idMsg").stringValue();
-        std::string roomId = msg.par("roomId").stringValue();
-        std::vector<std::string> participants = msg.par("participants").objectValue();
+        std::string adminId = std::string(msg.par("senderId").stringValue());
+        std::string roomId = std::string(msg.par("roomId").stringValue());
+        std::vector<std::string> participants = string_to_vectorOfStrings(std::string(msg.par("participants").stringValue()));
         return new RoomCreationMessage(adminId, roomId, participants);
     } else {
         throw std::runtime_error("Unknown message type");
@@ -36,11 +36,11 @@ std::vector<std::string> RoomCreationMessage::getParticipants() const {
 }
 
 omnetpp::cMessage* RoomCreationMessage::getCmessage() const {
-    omnetpp::cMessage *msg = new omnetpp::cMessage("cosaèquesto");
-    msg->addPar("idMsg").setStringValue(adminId);
+    omnetpp::cMessage *msg = new omnetpp::cMessage("crea_stanza");
+    msg->addPar("senderId").setStringValue(adminId.c_str());
     msg->addPar("type").setStringValue("create_room");
-    msg->addPar("roomId").setStringValue(roomId);
-    msg->addPar("participants").setObjectValue(participants);
+    msg->addPar("roomId").setStringValue(roomId.c_str());
+    msg->addPar("participants").setStringValue(vectorOfStrings_to_String(participants).c_str());
     return msg;
 }
 
@@ -68,11 +68,11 @@ const std::vector<int>& ChatMessage::getVectorClock() const {
 }
 
 omnetpp::cMessage* ChatMessage::getCmessage() const {
-    omnetpp::cMessage *msg = new omnetpp::cMessage("cosaèquesto");
-    msg->addPar("idMsg").setStringValue(senderId);
+    omnetpp::cMessage *msg = new omnetpp::cMessage("messaggio");
+    msg->addPar("senderId").setStringValue(senderId.c_str());
     msg->addPar("type").setStringValue("message");
-    msg->addPar("roomId").setStringValue(roomId);
-    msg->addPar("vectorClock").setObjectValue(vectorClock);
+    msg->addPar("roomId").setStringValue(roomId.c_str());
+    msg->addPar("vectorClock").setStringValue(vectorOfInts_to_String(vectorClock).c_str());
     msg->addPar("message").setStringValue(content.c_str());
     return msg;
 }

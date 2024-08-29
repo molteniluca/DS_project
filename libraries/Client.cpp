@@ -2,6 +2,7 @@
 
 #include <cstdlib> // For rand() and srand()
 #include <ctime>   // For time()
+#include <algorithm> // For find
 
 Client::Client(std::string userId) : userId(userId) {
     // Seed the random number generator
@@ -35,7 +36,7 @@ ChatMessage* Client::getRandomMessage(std::string text) {
 }
 
 void Client::handleRoomCreation(RoomCreationMessage *msg) {
-    Room room(*msg);
+    Room room(*msg, userId);
     rooms[room.getRoomId()] = room;
 }
 
@@ -48,6 +49,10 @@ void Client::handleChatMessage(ChatMessage *msg) {
 ActionPerformed Client::handleMessage(Message *msg) {
     if (msg->getType() == MessageType::CREATE_ROOM) {
         RoomCreationMessage *roomMsg = dynamic_cast<RoomCreationMessage*>(msg);
+        std::vector<std::string> participants = roomMsg->getParticipants();
+        if(std::find(participants.begin(), participants.end(), userId) == participants.end()){
+            return ActionPerformed::DISCARDED_NON_RECIVER_MESSAGE;
+        }
         if(rooms.find(roomMsg->getRoomId()) != rooms.end())
             return ActionPerformed::DISCARDED_ALREADY_RECIVED_MESSAGE;
         handleRoomCreation(roomMsg);
@@ -55,8 +60,11 @@ ActionPerformed Client::handleMessage(Message *msg) {
     }
     if (msg->getType() == MessageType::CHAT) {
         ChatMessage* chatMsg = dynamic_cast<ChatMessage*>(msg);
-        if (rooms[chatMsg->getRoomId()].checkReceived(chatMsg))
+        if(rooms.find(chatMsg->getRoomId()) == rooms.end())
+            return ActionPerformed::DISCARDED_NON_RECIVER_MESSAGE;
+        if (rooms[chatMsg->getRoomId()].checkReceived(chatMsg)) {
             return ActionPerformed::DISCARDED_ALREADY_RECIVED_MESSAGE;
+        }
         handleChatMessage(chatMsg);
         return ActionPerformed::RECIVED_CHAT_MESSAGE;
     }

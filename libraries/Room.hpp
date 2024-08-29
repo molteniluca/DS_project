@@ -1,7 +1,6 @@
 #ifndef ROOM_HPP
 #define ROOM_HPP
 
-#include <iostream>
 #include <vector>
 #include <string>
 
@@ -11,7 +10,10 @@ class Room {
 public:
     Room(std::vector<std::string> participants, std::string adminId, std::string roomId);
 
-    Room(RoomCreationMessage msg);
+    Room(RoomCreationMessage msg, std::string userId);
+
+    // necessary for using Room in std::map
+    Room();
 
     std::string getRoomId();
 
@@ -27,6 +29,7 @@ public:
 
 private:
     int numParticipants;
+    int userIndex;
     std::string userId;
     std::string adminId;
     std::string roomId;

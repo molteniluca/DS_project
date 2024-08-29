@@ -13,7 +13,7 @@ enum class MessageType {
 
 class Message {
 public:
-    static Message* createMessage(const omnetpp::cMessage& msg);
+    static Message* createMessage(omnetpp::cMessage& msg);
 
     virtual MessageType getType() const = 0;
     virtual omnetpp::cMessage* getCmessage() const = 0;
