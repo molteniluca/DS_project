@@ -1,3 +1,4 @@
+// Client for a Ring network
 simple ClientRing
 {
     gates:

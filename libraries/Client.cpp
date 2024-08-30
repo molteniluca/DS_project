@@ -1,13 +1,16 @@
 #include "Client.hpp"
 
-#include <cstdlib> // For rand() and srand()
-#include <ctime>   // For time()
 #include <algorithm> // For find()
 #include <stdexcept> // For invalid_argument exception
 
-Client::Client(std::string userId) : userId(userId) {
-    // Seed the random number generator
-    std::srand(std::time(nullptr));
+Client::Client(std::string userId) : userId(userId) { }
+
+std::vector<std::string> Client::getRooms() {
+    std::vector<std::string> roomIds;
+    for (auto const& room : rooms) {
+        roomIds.push_back(room.first);
+    }
+    return roomIds;
 }
 
 RoomCreationMessage* Client::createRoom(std::string roomId, std::vector<std::string> participants) {
@@ -17,21 +20,11 @@ RoomCreationMessage* Client::createRoom(std::string roomId, std::vector<std::str
     return room.getMessageCreation();
 }
 
-ChatMessage* Client::getRandomMessage(std::string text) {
-    if (rooms.empty()) {
-        return nullptr;
-    }
+ChatMessage* Client::getMessage(std::string text, std::string roomId) {
+    if(rooms.find(roomId) == rooms.end())
+        throw std::invalid_argument("Room does not exist");
 
-    // Generate a random index
-    int randomIndex = std::rand() % rooms.size();
-
-    // Get the room at the random index
-    auto it = rooms.begin();
-    std::advance(it, randomIndex);
-    Room& randomRoom = it->second;
-
-    // Create a new message for the selected room
-    ChatMessage* msg = randomRoom.getMessage(text);
+    ChatMessage* msg = rooms[roomId].getMessage(text);
 
     return msg;
 }

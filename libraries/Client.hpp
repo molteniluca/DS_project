@@ -26,8 +26,9 @@ private:
 public:
     Client(std::string userId);
 
+    std::vector<std::string> getRooms();
     RoomCreationMessage* createRoom(std::string roomId, std::vector<std::string> participants);
-    ChatMessage* getRandomMessage(std::string text);
+    ChatMessage* getMessage(std::string text, std::string roomId);
     ActionPerformed handleMessage(Message *msg);
 };
 

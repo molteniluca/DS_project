@@ -34,6 +34,8 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cpp, .msg and .sm files
 OBJS = \
+    $O/ClientFully.o \
+    $O/ClientNetwork.o \
     $O/ClientRing.o \
     $O/libraries/Client.o \
     $O/libraries/Message.o \

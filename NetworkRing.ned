@@ -1,3 +1,4 @@
+// Netword topology: Ring
 network NetworkRing
 {
     parameters:
