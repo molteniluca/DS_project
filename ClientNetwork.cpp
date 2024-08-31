@@ -7,7 +7,7 @@
 #include "libraries/UserEvent.hpp"
 #include "libraries/utils.hpp"
 
-ClientNetwork::ClientNetwork() : cSimpleModule(), personalRoomId(0), client(nullptr), timeToLive(-1) {}
+ClientNetwork::ClientNetwork() : cSimpleModule(), personalRoomId(0), personalMessageId(0), client(nullptr), timeToLive(-1) {}
 
 void ClientNetwork::initialize()
 {
@@ -100,14 +100,14 @@ void ClientNetwork::handleEvent_SendMessage()
     }
 
     std::string roomId = rooms[intuniform(0, rooms.size()-1)];
-    ChatMessage *msg = client->getMessage("msg text", roomId);
+    ChatMessage *msg = client->getMessage("msg("+std::to_string(this->personalMessageId++)+","+getFullName()+")", roomId);
 
     cMessage *cMsg = msg->getCmessage();
     cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
     sendToAll(cMsg);
 
-    EV << this->getFullName() << " - Sending message to room " << msg->getRoomId() << endl;
-    std::cout << this->getFullName() << " - Sending message to room " << msg->getRoomId() << std::endl;
+    EV << this->getFullName() << " - Sending message to room " << msg->getRoomId() << " - " << msg->getContent() << endl;
+    std::cout << this->getFullName() << " - Sending message to room " << msg->getRoomId()  << " - " << msg->getContent() << std::endl;
 
     delete msg;
     return;

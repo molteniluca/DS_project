@@ -66,3 +66,13 @@ bool canBeReceived(const std::vector<int>& received, const std::vector<int>& loc
         return false;
     }
 }
+
+std::string genRandomString() {
+    std::string str("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+    std::string newstr;
+    for(int i = 0; i < 10; ++i) {
+        int pos = std::rand() % str.size();
+        newstr += str[pos];
+    }
+    return newstr;
+}

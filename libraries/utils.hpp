@@ -11,5 +11,6 @@ std::string vectorOfInts_to_String(const std::vector<int>&);
 std::vector<int> string_to_vectorOfInts(const std::string&);
 
 bool canBeReceived(const std::vector<int>& received, const std::vector<int>& localVector, int senderId);
+std::string genRandomString();
 
 #endif // UTILS_HPP
