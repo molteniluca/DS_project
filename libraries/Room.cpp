@@ -83,6 +83,7 @@ void Room::processMessage(ChatMessage *msg) {
     std::string senderId = msg->getSenderId();
     if(canBeReceived(receivedVectorClock, vectorClock, lookupUserIndex(senderId))) {
         displayMessage(msg);
+        vectorClock[lookupUserIndex(senderId)]++;
         flushMessages();
     }else{
         messagesQueue.insert(std::make_pair(receivedVectorClock, *msg));
@@ -100,6 +101,7 @@ void Room::flushMessages() {
 
             if (canBeReceived(receivedVectorClock, vectorClock, lookupUserIndex(message.getSenderId()))) {
                 displayMessage(&message);
+                vectorClock[lookupUserIndex(message.getSenderId())]++;
                 messagesQueue.erase(it);
                 found = true;
                 break;
