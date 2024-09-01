@@ -23,7 +23,7 @@ private:
 
     void handleRoomCreation(RoomCreationMessage *msg);
     void handleChatMessage(ChatMessage *msg);
-    void handleAskMessage(AskMessage *msg);
+    ChatMessage* handleAskMessage(AskMessage *msg);
 
 public:
     Client(std::string userId);
@@ -31,7 +31,7 @@ public:
     std::vector<std::string> getRooms();
     RoomCreationMessage* createRoom(std::string roomId, std::vector<std::string> participants);
     ChatMessage* getMessage(std::string text, std::string roomId);
-    ActionPerformed handleMessage(Message *msg);
+    std::pair<ActionPerformed, BaseMessage *> handleMessage(Message *msg);
 };
 
 #endif // CLIENT_HPP
