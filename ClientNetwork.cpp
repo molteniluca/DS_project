@@ -25,6 +25,7 @@ void ClientNetwork::handleMessage(cMessage *msg)
     
     if(msg->isSelfMessage()) {
         handleUserEvent(msg);
+        delete msg;
         return;
     }
 
@@ -71,7 +72,6 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
             break;
     }
 
-    delete msg;
     return;
 }
 

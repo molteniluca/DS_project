@@ -9,6 +9,8 @@ std::string ue_toString(UserEvent ue)
             return "CREATE_ROOM";
         case UserEvent::SEND_MESSAGE:
             return "SEND_MESSAGE";
+        default:
+            throw std::invalid_argument("Invalid UserEvent");
     }
 }
 
