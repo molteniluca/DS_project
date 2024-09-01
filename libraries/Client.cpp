@@ -29,6 +29,11 @@ ChatMessage* Client::getMessage(std::string text, std::string roomId) {
     return msg;
 }
 
+void Client::handleAskMessage(AskMessage *amsg) {
+    ChatMessage *cm = rooms[amsg->getRoomId()].resendMessage(amsg);
+    std::cout<<"NOT IMPLEMENTED YET"<<std::endl;
+}
+
 void Client::handleRoomCreation(RoomCreationMessage *msg) {
     Room room(*msg, userId);
     rooms[room.getRoomId()] = room;
@@ -60,6 +65,15 @@ ActionPerformed Client::handleMessage(Message *msg) {
         handleChatMessage(chatMsg);
         /// TODO: differentiate between displayed and queued messages
         return ActionPerformed::RECEIVED_CHAT_MESSAGE;
+    }
+    if (msg->getType() == MessageType::ASK) {
+        AskMessage* askMsg = dynamic_cast<AskMessage*>(msg);
+        if(rooms.find(askMsg->getRoomId()) == rooms.end())
+            return ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE;
+        
+        handleAskMessage(askMsg);
+
+        return ActionPerformed::ASKED_FOR_MESSAGE;
     }
 
     throw std::invalid_argument("Invalid message type");

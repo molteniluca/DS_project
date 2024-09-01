@@ -17,8 +17,13 @@ Message* Message::createMessage(omnetpp::cMessage& msg) {
         std::string roomId = std::string(msg.par("roomId").stringValue());
         std::vector<std::string> participants = string_to_vectorOfStrings(std::string(msg.par("participants").stringValue()));
         return new RoomCreationMessage(adminId, roomId, participants);
+    } else if (type == "ask") {
+        int missingMessageId = msg.par("missingMessageId").longValue();
+        std::string missingSenderId = std::string(msg.par("missingSenderId").stringValue());
+        std::string roomId = std::string(msg.par("roomId").stringValue());
+        return new AskMessage(missingMessageId, missingSenderId, roomId);
     } else {
-        throw std::invalid_argument("Unknown message type");
+        throw std::runtime_error("Unknown message type");
     }
 }
 
@@ -81,4 +86,32 @@ omnetpp::cMessage* ChatMessage::getCmessage() const {
 
 MessageType ChatMessage::getType() const {
     return MessageType::CHAT;
+}
+
+AskMessage::AskMessage(int missingMessageId, std::string missingSenderId, std::string roomId)
+    : missingMessageId(missingMessageId), missingSenderId(missingSenderId), roomId(roomId) {}
+
+int AskMessage::getMissingMessageId() const {
+    return missingMessageId;
+}
+
+std::string AskMessage::getMissingSenderId() const {
+    return missingSenderId;
+}
+
+std::string AskMessage::getRoomId() const {
+    return roomId;
+}
+
+omnetpp::cMessage* AskMessage::getCmessage() const {
+    omnetpp::cMessage* msg = new omnetpp::cMessage(("ask message for missing message " + std::to_string(missingMessageId)).c_str());
+    msg->addPar("type").setStringValue("ask");
+    msg->addPar("missingMessageId").setLongValue(missingMessageId);
+    msg->addPar("missingSenderId").setStringValue(missingSenderId.c_str());
+    msg->addPar("roomId").setStringValue(roomId.c_str());
+    return msg;
+}
+
+MessageType AskMessage::getType() const {
+    return MessageType::ASK;
 }

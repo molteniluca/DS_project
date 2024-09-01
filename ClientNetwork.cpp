@@ -28,7 +28,19 @@ void ClientNetwork::handleMessage(cMessage *msg)
         return;
     }
 
-    handleReceivedMessage(msg);
+    try{
+        handleReceivedMessage(msg);
+    }
+    catch(Room::QueueTooLongException &e) {
+        for(AskMessage am : e.missingMessages) {
+            cMessage *cMsg = am.getCmessage();
+            cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+            sendToAll(cMsg);
+
+            EV << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << endl;
+            std::cout << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << std::endl;
+        }
+    }
 
     forwardMessage(msg);
 
@@ -128,8 +140,10 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
     } else if(ap == ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE) {
         EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message discarded for I'm not a recipient: " << endl;
         std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message discarded for I'm not a recipient: " << std::endl;
+    } else if(ap == ActionPerformed::ASKED_FOR_MESSAGE) {
+        EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message: " << msg->par("missingMessageId").longValue() << endl;
+        std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message: " << msg->par("missingMessageId").longValue() << std::endl;
     }
-
     return;
 }
 

@@ -81,13 +81,44 @@ void Room::displayMessage(ChatMessage *msg){
 void Room::processMessage(ChatMessage *msg) {
     std::vector<int> receivedVectorClock = msg->getVectorClock();
     std::string senderId = msg->getSenderId();
+    messages.insert(std::make_pair(receivedVectorClock, *msg));
     if(canBeReceived(receivedVectorClock, vectorClock, lookupUserIndex(senderId))) {
         displayMessage(msg);
         vectorClock[lookupUserIndex(senderId)]++;
         flushMessages();
     }else{
         messagesQueue.insert(std::make_pair(receivedVectorClock, *msg));
+        if (messagesQueue.size() > 10) {
+            throw QueueTooLongException(getMissingMessages());
+        }
     }
+}
+
+std::list<AskMessage> Room::getMissingMessages() {
+    std::string missingSenderId;
+    std::list<AskMessage> missingMessagesList;
+
+    for(int i = 0; i < numParticipants; i++) {
+        AskMessage missingMessage = *(new AskMessage(vectorClock[i]+1, missingSenderId, roomId));
+        missingMessagesList.push_back(missingMessage);
+    }
+
+    return missingMessagesList;
+}
+
+ChatMessage* Room::resendMessage(AskMessage *amsg) {
+    int missingMessageId = amsg->getMissingMessageId();
+    std::string missingSenderId = amsg->getMissingSenderId();
+
+    for(auto it = messages.begin(); it != messages.end(); it++) {
+        std::vector<int> messageVectorClock = it->first;
+        ChatMessage *message = &it->second;
+        if(message->getSenderId() == missingSenderId && missingMessageId == messageVectorClock[lookupUserIndex(missingSenderId)]) {
+            return message;
+        }
+    }
+
+    return nullptr;
 }
 
 

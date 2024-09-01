@@ -12,7 +12,8 @@ enum class ActionPerformed {
     CREATED_ROOM,
     DISCARDED_NON_RECIPIENT_MESSAGE,
     RECEIVED_CHAT_MESSAGE,
-    DISCARDED_ALREADY_RECEIVED_MESSAGE
+    DISCARDED_ALREADY_RECEIVED_MESSAGE,
+    ASKED_FOR_MESSAGE
 };
 
 class Client {
@@ -22,6 +23,7 @@ private:
 
     void handleRoomCreation(RoomCreationMessage *msg);
     void handleChatMessage(ChatMessage *msg);
+    void handleAskMessage(AskMessage *msg);
 
 public:
     Client(std::string userId);
