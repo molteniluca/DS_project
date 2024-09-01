@@ -20,14 +20,23 @@ ClientRing::ClientRing() : ClientNetwork() {}
 
 void ClientRing::sendToAll(cMessage *msg)
 {
-    send(msg, "out_left");
-    send(msg->dup(), "out_right");
+    try{
+        send(msg, "out_left");
+    } catch(cRuntimeError e) {}
+
+    try{
+        send(msg->dup(), "out_right");
+    } catch(cRuntimeError e) {}
 }
 
 void ClientRing::forward(cMessage *msg)
 {
     if(std::string(msg->getArrivalGate()->getName()) == "in_left")
-        send(msg, "out_right");
+        try{
+            send(msg, "out_right");
+        } catch(cRuntimeError e) {}
     else if(std::string(msg->getArrivalGate()->getName()) == "in_right")
-        send(msg, "out_left");
+        try{
+            send(msg, "out_left");
+        } catch(cRuntimeError e) {}
 }

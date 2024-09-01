@@ -37,6 +37,8 @@ OBJS = \
     $O/ClientFully.o \
     $O/ClientNetwork.o \
     $O/ClientRing.o \
+    $O/NetworkBehavior.o \
+    $O/NetworkRingBehavior.o \
     $O/libraries/Client.o \
     $O/libraries/Message.o \
     $O/libraries/Room.o \
