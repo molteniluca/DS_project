@@ -12,7 +12,10 @@ enum class MessageType {
     ASK
 };
 
-class Message {
+class BaseMessage {
+};
+
+class Message : public BaseMessage {
 public:
     static Message* createMessage(omnetpp::cMessage& msg);
 

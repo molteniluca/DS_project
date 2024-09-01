@@ -67,8 +67,11 @@ RoomCreationMessage* Room::getMessageCreation() {
 
 ChatMessage* Room::getMessage(const std::string& message) {
     vectorClock[userIndex]++;
+    ChatMessage *msg = new ChatMessage(userId, roomId, message, vectorClock);
+
+    messages.insert(std::make_pair(vectorClock, *msg));
     
-    return new ChatMessage(userId, roomId, message, vectorClock);
+    return msg;
 }
 
 void Room::displayMessage(ChatMessage *msg){
@@ -88,9 +91,9 @@ void Room::processMessage(ChatMessage *msg) {
         flushMessages();
     }else{
         messagesQueue.insert(std::make_pair(receivedVectorClock, *msg));
-        if (messagesQueue.size() > 10) {
-            throw QueueTooLongException(getMissingMessages());
-        }
+    }
+    if (messagesQueue.size() >= 5) {
+        throw QueueTooLongException(getMissingMessages());
     }
 }
 
@@ -99,7 +102,7 @@ std::list<AskMessage> Room::getMissingMessages() {
     std::list<AskMessage> missingMessagesList;
 
     for(int i = 0; i < numParticipants; i++) {
-        AskMessage missingMessage = *(new AskMessage(vectorClock[i]+1, missingSenderId, roomId));
+        AskMessage missingMessage = *(new AskMessage(vectorClock[i]+1, participants[i], roomId));
         missingMessagesList.push_back(missingMessage);
     }
 

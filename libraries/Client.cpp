@@ -29,9 +29,9 @@ ChatMessage* Client::getMessage(std::string text, std::string roomId) {
     return msg;
 }
 
-void Client::handleAskMessage(AskMessage *amsg) {
+ChatMessage *Client::handleAskMessage(AskMessage *amsg) {
     ChatMessage *cm = rooms[amsg->getRoomId()].resendMessage(amsg);
-    std::cout<<"NOT IMPLEMENTED YET"<<std::endl;
+    return cm;
 }
 
 void Client::handleRoomCreation(RoomCreationMessage *msg) {
@@ -43,37 +43,35 @@ void Client::handleChatMessage(ChatMessage *msg) {
     rooms[msg->getRoomId()].processMessage(msg);
 }
 
-ActionPerformed Client::handleMessage(Message *msg) {
+std::pair<ActionPerformed, BaseMessage*> Client::handleMessage(Message *msg) {
     if (msg->getType() == MessageType::CREATE_ROOM) {
         RoomCreationMessage *roomMsg = dynamic_cast<RoomCreationMessage*>(msg);
         std::vector<std::string> participants = roomMsg->getParticipants();
         if(std::find(participants.begin(), participants.end(), userId) == participants.end()){
-            return ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE;
+            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
         }
         if(rooms.find(roomMsg->getRoomId()) != rooms.end())
-            return ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE;
+            return std::pair(ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE, (BaseMessage*)nullptr);
         handleRoomCreation(roomMsg);
-        return ActionPerformed::CREATED_ROOM;
+        return std::pair(ActionPerformed::CREATED_ROOM, (BaseMessage*)nullptr);
     }
     if (msg->getType() == MessageType::CHAT) {
         ChatMessage* chatMsg = dynamic_cast<ChatMessage*>(msg);
         if(rooms.find(chatMsg->getRoomId()) == rooms.end())
-            return ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE;
+            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
         if (rooms[chatMsg->getRoomId()].checkReceived(chatMsg)) {
-            return ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE;
+            return std::pair(ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE, (BaseMessage*)nullptr);
         }
         handleChatMessage(chatMsg);
         /// TODO: differentiate between displayed and queued messages
-        return ActionPerformed::RECEIVED_CHAT_MESSAGE;
+        return std::pair(ActionPerformed::RECEIVED_CHAT_MESSAGE, (BaseMessage*)nullptr);
     }
     if (msg->getType() == MessageType::ASK) {
         AskMessage* askMsg = dynamic_cast<AskMessage*>(msg);
         if(rooms.find(askMsg->getRoomId()) == rooms.end())
-            return ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE;
+            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
         
-        handleAskMessage(askMsg);
-
-        return ActionPerformed::ASKED_FOR_MESSAGE;
+        return std::pair(ActionPerformed::ASKED_FOR_MESSAGE, handleAskMessage(askMsg));
     }
 
     throw std::invalid_argument("Invalid message type");

@@ -127,7 +127,8 @@ void ClientNetwork::handleEvent_SendMessage()
 
 void ClientNetwork::handleReceivedMessage(cMessage *msg)
 {
-    ActionPerformed ap = client->handleMessage(Message::createMessage(*msg));
+    std::pair<ActionPerformed, BaseMessage *> result = client->handleMessage(Message::createMessage(*msg));
+    ActionPerformed ap = result.first;
     if(ap == ActionPerformed::CREATED_ROOM) {
         EV << this->getFullName() << " - Room created: " << msg->par("roomId").stringValue() << endl;
         std::cout << this->getFullName() << " - Room created: " << msg->par("roomId").stringValue() << std::endl;
@@ -143,6 +144,18 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
     } else if(ap == ActionPerformed::ASKED_FOR_MESSAGE) {
         EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message: " << msg->par("missingMessageId").longValue() << endl;
         std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message: " << msg->par("missingMessageId").longValue() << std::endl;
+
+        ChatMessage *cm = (ChatMessage *)result.second;
+        if (cm != nullptr) {
+            cMessage *cMess = cm->getCmessage();
+            cMess->addPar("timeToLive").setLongValue(this->timeToLive);
+            sendToAll(cMess);
+            EV << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << endl;
+            std::cout << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << std::endl;
+        }else {
+            EV << this->getFullName() << " - No message to replay room: " << msg->par("roomId").stringValue() << endl;
+            std::cout << this->getFullName() << " - No message to replay room: " << msg->par("roomId").stringValue() << std::endl;
+        }
     }
     return;
 }
