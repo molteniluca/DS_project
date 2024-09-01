@@ -3,7 +3,6 @@ network NetworkRing
 {
     parameters:
         int numClients = default(5); // Parameter to set the number of clients
-        @displayColor("lightblue");
     
     submodules:
         behavior: NetworkRingBehavior;
@@ -19,5 +18,5 @@ network NetworkRing
 simple NetworkRingBehavior
 {
     parameters:
-        @display("bgb=0,0");
+        /// TODO: Hide
 }
