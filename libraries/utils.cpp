@@ -68,6 +68,7 @@ bool canBeReceived(const std::vector<int>& received, const std::vector<int>& loc
     }
 }
 
+<<<<<<< HEAD
 std::string setOfTuplesOfStrings_to_String(const std::set<std::tuple<std::string, std::string>>& set) {
     std::ostringstream oss;
     bool first = true;
@@ -104,3 +105,14 @@ std::set<std::tuple<std::string, std::string>> string_to_setOfTuplesOfStrings(co
 
     return resultSet;
 }
+=======
+std::string genRandomString() {
+    std::string str("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+    std::string newstr;
+    for(int i = 0; i < 10; ++i) {
+        int pos = std::rand() % str.size();
+        newstr += str[pos];
+    }
+    return newstr;
+}
+>>>>>>> 89faf71c37d6167cd883912dd3b043f9c681b63d

@@ -35,6 +35,22 @@ public:
 
     int lookupUserIndex(const std::string& userId);
 
+    std::list<AskMessage> getMissingMessages();
+
+    ChatMessage* resendMessage(AskMessage *amsg);
+
+
+    class QueueTooLongException : public std::exception {
+        virtual const char* what() const throw() {
+            return "Queue too long";
+        }
+
+        public:
+            QueueTooLongException(std::list<AskMessage> missingMessages) : missingMessages(missingMessages) {}
+            std::list<AskMessage> missingMessages;        
+    };
+
+
 private:
     int numParticipants;
     int userIndex;
@@ -43,7 +59,7 @@ private:
     std::string roomId;
     std::vector<std::string> participants;
     std::vector<int> vectorClock;   
-    std::vector<std::string> messages;
+    std::map<std::vector<int>, ChatMessage> messages;
     std::map<std::vector<int>, ChatMessage> messagesQueue;
 };
 

@@ -15,5 +15,6 @@ std::string setOfTuplesOfStrings_to_String(const std::set<std::tuple<std::string
 std::set<std::tuple<std::string, std::string>> string_to_setOfTuplesOfStrings(const std::string&);
 
 bool canBeReceived(const std::vector<int>& received, const std::vector<int>& localVector, int senderId);
+std::string genRandomString();
 
 #endif // UTILS_HPP

@@ -8,7 +8,8 @@
 enum class MessageType {
     CREATE_ROOM,
     CHAT,
-    UNKNOWN
+    UNKNOWN,
+    ASK
 };
 
 class Message {
@@ -55,6 +56,24 @@ private:
     std::string roomId;
     std::string content;
     std::vector<int> vectorClock;
+};
+
+class AskMessage : public Message {
+public:
+    AskMessage(int missingMessageId, std::string missingSenderId, std::string RoomId);
+    
+    int getMissingMessageId() const;
+    std::string getMissingSenderId() const;
+    std::string getRoomId() const;
+
+    omnetpp::cMessage* getCmessage() const override;
+
+    MessageType getType() const override;
+
+private:
+    int missingMessageId;
+    std::string missingSenderId;
+    std::string roomId;
 };
 
 #endif // MESSAGE_HPP

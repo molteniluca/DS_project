@@ -7,7 +7,7 @@
 #include "libraries/UserEvent.hpp"
 #include "libraries/utils.hpp"
 
-ClientNetwork::ClientNetwork() : cSimpleModule(), personalRoomId(0), client(nullptr), timeToLive(-1) {}
+ClientNetwork::ClientNetwork() : cSimpleModule(), personalRoomId(0), personalMessageId(0), client(nullptr), timeToLive(-1) {}
 
 void ClientNetwork::initialize()
 {
@@ -29,7 +29,19 @@ void ClientNetwork::handleMessage(cMessage *msg)
         return;
     }
 
-    handleReceivedMessage(msg);
+    try{
+        handleReceivedMessage(msg);
+    }
+    catch(Room::QueueTooLongException &e) {
+        for(AskMessage am : e.missingMessages) {
+            cMessage *cMsg = am.getCmessage();
+            cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+            sendToAll(cMsg);
+
+            EV << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << endl;
+            std::cout << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << std::endl;
+        }
+    }
 
     forwardMessage(msg);
 
@@ -100,14 +112,14 @@ void ClientNetwork::handleEvent_SendMessage()
     }
 
     std::string roomId = rooms[intuniform(0, rooms.size()-1)];
-    ChatMessage *msg = client->getMessage("msg text", roomId);
+    ChatMessage *msg = client->getMessage("msg("+std::to_string(this->personalMessageId++)+","+getFullName()+")", roomId);
 
     cMessage *cMsg = msg->getCmessage();
     cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
     sendToAll(cMsg);
 
-    EV << this->getFullName() << " - Sending message to room " << msg->getRoomId() << endl;
-    std::cout << this->getFullName() << " - Sending message to room " << msg->getRoomId() << std::endl;
+    EV << this->getFullName() << " - Sending message to room " << msg->getRoomId() << " - " << msg->getContent() << endl;
+    std::cout << this->getFullName() << " - Sending message to room " << msg->getRoomId()  << " - " << msg->getContent() << std::endl;
 
     delete msg;
     return;
@@ -128,8 +140,10 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
     } else if(ap == ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE) {
         EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message discarded for I'm not a recipient: " << endl;
         std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message discarded for I'm not a recipient: " << std::endl;
+    } else if(ap == ActionPerformed::ASKED_FOR_MESSAGE) {
+        EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message: " << msg->par("missingMessageId").longValue() << endl;
+        std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message: " << msg->par("missingMessageId").longValue() << std::endl;
     }
-
     return;
 }
 
