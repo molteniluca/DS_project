@@ -7,7 +7,8 @@ enum class UserEvent {
     CREATE_ROOM,
     SEND_MESSAGE,
     RESEND_CREATION,
-    ASK_MESSAGES
+    ASK_MESSAGES,
+    DELETE_ROOM
 };
 
 std::string ue_toString(UserEvent ue);

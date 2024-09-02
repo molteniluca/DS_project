@@ -64,6 +64,8 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
             if(simTime() < this->stopEventTime) {
                 scheduleAt(simTime() + uniform(1000, 5000), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
             }
+
+            scheduleAt(simTime() + ROOM_LIVE_TIME, new cMessage(ue_toString(UserEvent::DELETE_ROOM).c_str()));
             break;
 
         case UserEvent::SEND_MESSAGE:
@@ -86,10 +88,35 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
             scheduleAt(simTime() + 200, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
             break;
 
+        case UserEvent::DELETE_ROOM:
+            handleEvent_deleteFirstRoom();
+            break;
+
         default:
             break;
     }
 
+    return;
+}
+
+void ClientNetwork::handleEvent_deleteFirstRoom()
+{
+    std::vector<std::string> rooms = client->getRooms();
+    if(rooms.empty()) {
+        EV << this->getFullName() << " - No rooms available" << endl;
+        std::cout << this->getFullName() << " - No rooms available" << std::endl;
+        return;
+    }
+
+    std::string roomId = rooms[0];
+    RoomDeletionMessage *msg = client->getRoomDeletionMessage(roomId);
+    client->deleteRoom(msg);
+    cMessage *cMsg = msg->getCmessage();
+    cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+    sendToAll(cMsg);
+
+    EV << this->getFullName() << " - Deleting room: " << roomId << endl;
+    std::cout << this->getFullName() << " - Deleting room: " << roomId << std::endl;
     return;
 }
 
@@ -211,9 +238,6 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
             EV << this->getFullName() << " - No message to replay room: " << msg->par("roomId").stringValue() << endl;
             std::cout << this->getFullName() << " - No message to replay room: " << msg->par("roomId").stringValue() << std::endl;
         }
-    } else if (ap == ActionPerformed::RECEIVED_ACK_FOR_ROOM_CREATION) {
-        EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Ack received: " << msg->par("userId").stringValue() << endl;
-        std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Ack received: " << msg->par("userId").stringValue() << std::endl;
     }
     return;
 }

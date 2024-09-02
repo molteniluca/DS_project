@@ -52,7 +52,28 @@ AckMessage* Client::handleRoomCreation(RoomCreationMessage *msg) {
 }
 
 void Client::handleChatMessage(ChatMessage *msg) {
-    rooms[msg->getRoomId()].processMessage(msg);
+    try{
+        rooms[msg->getRoomId()].processMessage(msg);
+    } catch (Room::DeleteMeException e) {
+        rooms.erase(msg->getRoomId());
+        std::cout << "Room " << e.getRoomId() << " deleted" << std::endl;
+    }
+}
+
+void Client::deleteRoom(RoomDeletionMessage *msg) {
+    if(rooms.find(msg->getRoomId()) == rooms.end())
+        throw std::invalid_argument("Room does not exist");
+    try{
+        rooms[msg->getRoomId()].deleteRoom(msg);
+    } catch (Room::DeleteMeException e) {
+        rooms.erase(msg->getRoomId());
+    }
+}
+
+RoomDeletionMessage *  Client::getRoomDeletionMessage(std::string roomId){
+    if(rooms.find(roomId) == rooms.end())
+        throw std::invalid_argument("Room does not exist");
+    return new RoomDeletionMessage(roomId, rooms[roomId].getVectorClock());
 }
 
 void Client::handleAckMessage(AckMessage *msg) {
@@ -99,6 +120,17 @@ std::pair<ActionPerformed, BaseMessage*> Client::handleMessage(Message *msg) {
         }
         handleAckMessage(ackMsg);
         return std::pair(ActionPerformed::RECEIVED_ACK_FOR_ROOM_CREATION, (BaseMessage*)nullptr);
+    }
+    if(msg->getType() == MessageType::DELETE_ROOM) {
+        RoomDeletionMessage* delMsg = dynamic_cast<RoomDeletionMessage*>(msg);
+        if(rooms.find(delMsg->getRoomId()) == rooms.end())
+            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
+        try{
+            rooms.find(delMsg->getRoomId())->second.deleteRoom(delMsg);
+        } catch (Room::DeleteMeException e) {
+            rooms.erase(delMsg->getRoomId());
+        }
+        return std::pair(ActionPerformed::ROOM_DELETED, (BaseMessage*)nullptr);
     }
 
     throw std::invalid_argument("Invalid message type");

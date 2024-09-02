@@ -15,7 +15,9 @@ enum class ActionPerformed {
     RECEIVED_CHAT_MESSAGE,
     DISCARDED_ALREADY_RECEIVED_MESSAGE,
     ANSWERED_ASK_FOR_MESSAGE,
-    RECEIVED_ACK_FOR_ROOM_CREATION
+    RECEIVED_ACK_FOR_ROOM_CREATION,
+    RECEIVED_ACK_FOR_ROOM_CREATION,
+    ROOM_DELETED
 };
 
 class Client {
@@ -37,6 +39,8 @@ public:
     ChatMessage* getMessage(std::string text, std::string roomId);
     std::pair<ActionPerformed, BaseMessage *> handleMessage(Message *msg);
     std::list<AskMessage> askMessages();
+    RoomDeletionMessage * getRoomDeletionMessage(std::string roomId);
+    void deleteRoom(RoomDeletionMessage *msg);
 };
 
 #endif // CLIENT_HPP

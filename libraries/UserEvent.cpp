@@ -13,6 +13,8 @@ std::string ue_toString(UserEvent ue)
             return "RESEND_CREATION";
         case UserEvent::ASK_MESSAGES:
             return "ASK_MESSAGES";
+        case UserEvent::DELETE_ROOM:
+            return "DELETE_ROOM";
         default:
             throw std::invalid_argument("Invalid UserEvent");
     }
@@ -28,6 +30,8 @@ UserEvent ue_fromString(std::string ue)
         return UserEvent::RESEND_CREATION;
     else if(ue == "ASK_MESSAGES")
         return UserEvent::ASK_MESSAGES;
+    else if(ue == "DELETE_ROOM")
+        return UserEvent::DELETE_ROOM;    
     
     throw std::invalid_argument("Invalid RandomEvent string");
 }

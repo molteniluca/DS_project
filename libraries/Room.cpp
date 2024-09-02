@@ -66,6 +66,24 @@ int Room::lookupUserIndex(const std::string& userId) const {
     return -1;
 }
 
+void Room::deleteRoom(RoomDeletionMessage *msg)
+{
+    if (msg->getRoomId() != roomId) {
+        throw std::runtime_error("Room deletion message for different room");
+    }
+    if (msg->getVectorClock().size() != numParticipants) {
+        throw std::runtime_error("Room deletion message with wrong vector clock size");
+    }
+    deletionVectorClock = msg->getVectorClock();
+    scheduledForDeletion = true;
+    for (int i = 0; i < numParticipants; i++) {
+        if (msg->getVectorClock()[i] > vectorClock[i]) {
+            return;
+        }
+    }
+    throw DeleteMeException(roomId);
+}
+
 std::string Room::getRoomId() const {
     return roomId;
 }
@@ -110,6 +128,15 @@ void Room::displayMessage(ChatMessage *msg){
     std::string senderId = msg->getSenderId();
 
     std::cout << this->userId << " - " << this->roomId << " - Displayed message: " << message << " from user " << senderId << std::endl;
+
+    if (scheduledForDeletion){
+        for (int i = 0; i < numParticipants; i++) {
+            if (deletionVectorClock[i] > vectorClock[i]) {
+                return;
+            }
+        }
+        throw DeleteMeException(roomId);
+    }
 }
 
 void Room::processMessage(ChatMessage *msg) {
