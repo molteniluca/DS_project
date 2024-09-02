@@ -1,4 +1,5 @@
 #include <string>
+#include <cmath>
 
 #include "ClientNetwork.hpp"
 
@@ -10,6 +11,7 @@ class ClientTree : public ClientNetwork
         ClientTree();
 
     protected:
+        virtual void initialize() override;
         virtual void sendToAll(cMessage *msg) override;
         virtual void forward(cMessage *msg) override;
 };
@@ -17,6 +19,12 @@ class ClientTree : public ClientNetwork
 Define_Module(ClientTree);
 
 ClientTree::ClientTree() : ClientNetwork() {}
+
+void ClientTree::initialize()
+{
+    ClientNetwork::initialize();
+    this->timeToLive = 2*(ceil((getParentModule()->par("numClients").intValue()+1)/log(2)));
+}
 
 void ClientTree::sendToAll(cMessage *msg)
 {

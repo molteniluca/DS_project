@@ -30,6 +30,8 @@ void ClientFully::initialize()
     std::string index = fullName.substr(fullName.find("[") + 1, fullName.find("]") - fullName.find("[") - 1);
     std::cout << "Index: " << index << "name: " << fullName << std::endl;
     this->myIndex = std::stoi(index);
+
+    this->timeToLive = 1;
 }
 
 void ClientFully::sendToAll(cMessage *msg)
