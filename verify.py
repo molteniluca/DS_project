@@ -1,5 +1,10 @@
-log_file_path = "test.log"
-# log_file_path = "out.txt"
+import sys
+
+if len(sys.argv) > 1:
+    log_file_path = sys.argv[1]
+else:
+    log_file_path = "test.log"
+
 
 rooms = {}
 messagesSent = {}
