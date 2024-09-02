@@ -10,6 +10,7 @@ ClientNetwork::ClientNetwork() : cSimpleModule(), personalRoomId(0), personalMes
 
 void ClientNetwork::initialize()
 {
+    stopEventTime = getParentModule()->par("stopEventTime").doubleValue();
     client = new Client(std::string(this->getFullName()));
     timeToLive = getParentModule()->par("numClients").intValue() / 2;
     scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
@@ -60,7 +61,9 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
             if(uniform(0, 1) < 0.2) {
                 handleEvent_RoomCreation();
             }
-            scheduleAt(simTime() + uniform(1000, 5000), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
+            if(simTime() < this->stopEventTime) {
+                scheduleAt(simTime() + uniform(1000, 5000), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
+            }
 
             //scheduleAt(simTime() + ROOM_LIVE_TIME, new cMessage(ue_toString(UserEvent::DELETE_ROOM).c_str()));
             break;
@@ -70,12 +73,14 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
             if(uniform(0, 1) < 0.5) {
                 handleEvent_SendMessage();
             }
-            scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
+            if(simTime() < this->stopEventTime) {
+                scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
+            }
             break;
         
         case UserEvent::RESEND_CREATION:
             handleEvent_ResendCreation();
-            scheduleAt(simTime() + 500, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
+            scheduleAt(simTime() + 100, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
             break;
 
         case UserEvent::DELETE_ROOM:
@@ -214,9 +219,6 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
             EV << this->getFullName() << " - No message to replay room: " << msg->par("roomId").stringValue() << endl;
             std::cout << this->getFullName() << " - No message to replay room: " << msg->par("roomId").stringValue() << std::endl;
         }
-    } else if (ap == ActionPerformed::ROOM_DELETED) {
-        EV << this->getFullName() << " - Room scheduled for deletion: " << msg->par("roomId").stringValue() << endl;
-        std::cout << this->getFullName() << " - Room scheduled for deletion: " << msg->par("roomId").stringValue() << std::endl;
     }
     return;
 }

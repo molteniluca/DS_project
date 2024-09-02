@@ -21,6 +21,7 @@ class ClientNetwork : public cSimpleModule
         int timeToLive;
         int personalRoomId; // Used to create unique room ids
         int personalMessageId; // Used to create unique message ids
+        double stopEventTime;
 
         virtual void initialize() override;
         virtual void handleMessage(cMessage *msg) override;

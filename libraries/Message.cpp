@@ -25,7 +25,7 @@ Message* Message::createMessage(omnetpp::cMessage& msg) {
     } else if (type == "ack") {
         std::string userId = std::string(msg.par("userId").stringValue());
         std::string roomId = std::string(msg.par("roomId").stringValue());
-        return new AckMessage(userId, roomId);
+        return new AckMessage(roomId, userId);
     } else if (type == "delete_room") {
         std::string roomId = std::string(msg.par("roomId").stringValue());
         std::vector<int> vectorClock = string_to_vectorOfInts(std::string(msg.par("vectorClock").stringValue()));
@@ -124,7 +124,7 @@ MessageType AskMessage::getType() const {
     return MessageType::ASK;
 }
 
-AckMessage::AckMessage(std::string userId, std::string roomId) : userId(userId), roomId(roomId) {}
+AckMessage::AckMessage(std::string roomId, std::string userId) : userId(userId), roomId(roomId) {}
 
 std::string AckMessage::getUserId() const {
     return userId;
