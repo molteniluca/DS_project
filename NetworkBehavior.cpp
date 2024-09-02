@@ -7,8 +7,9 @@
 NetworkBehavior::NetworkBehavior() : cSimpleModule() {}
 
 void NetworkBehavior::initialize() {
+    stopEventTime = getParentModule()->par("stopEventTime").doubleValue();
     cMessage *partitionEvent = new cMessage(ne_toString(NetworkEvent::PARTITION).c_str());
-    scheduleAt(simTime() + uniform(100, 200), partitionEvent);
+    scheduleAt(simTime() + uniform(1000, 2000), partitionEvent);
 }
 
 void NetworkBehavior::handleMessage(cMessage *msg) {
@@ -44,7 +45,9 @@ void NetworkBehavior::handleNetworkEvent(cMessage *msg) {
             gates = string_to_setOfTuplesOfStrings(msg->par("gates").stringValue());
             handleEvent_endPartition(gates);
             cMessage *partitionEvent = new cMessage(ne_toString(NetworkEvent::PARTITION).c_str());
-            scheduleAt(simTime() + uniform(1000, 2000), partitionEvent);
+            if(simTime() < this->stopEventTime) {
+                scheduleAt(simTime() + uniform(1000, 2000), partitionEvent);
+            }
             EV << "Ending partition" << endl;
             std::cout << "Ending partition" << std::endl;
             break;

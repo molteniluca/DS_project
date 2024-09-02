@@ -25,7 +25,7 @@ Message* Message::createMessage(omnetpp::cMessage& msg) {
     } else if (type == "ack") {
         std::string userId = std::string(msg.par("userId").stringValue());
         std::string roomId = std::string(msg.par("roomId").stringValue());
-        return new AckMessage(userId, roomId);
+        return new AckMessage(roomId, userId);
     } else {
         throw std::runtime_error("Unknown message type");
     }
@@ -120,7 +120,7 @@ MessageType AskMessage::getType() const {
     return MessageType::ASK;
 }
 
-AckMessage::AckMessage(std::string userId, std::string roomId) : userId(userId), roomId(roomId) {}
+AckMessage::AckMessage(std::string roomId, std::string userId) : userId(userId), roomId(roomId) {}
 
 std::string AckMessage::getUserId() const {
     return userId;

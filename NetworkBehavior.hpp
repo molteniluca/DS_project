@@ -23,6 +23,8 @@ class NetworkBehavior : public cSimpleModule
         virtual void handleEvent_endPartition(std::set<std::tuple<std::string,std::string>> gates) = 0;
 
     private:
+        double stopEventTime;
+        
         enum class NetworkEvent {
             PARTITION,
             END_PARTITION

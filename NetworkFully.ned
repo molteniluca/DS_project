@@ -3,6 +3,7 @@ network NetworkFully
 {
     parameters:
         int numClients = default(5); // Parameter to set the number of clients
+        double stopEventTime = default(100000); // Parameter to set the time to stop tsending room creation and chat messages before the simulation ends
 
     submodules:
         behavior: NetworkFullyBehavior;

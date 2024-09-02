@@ -91,10 +91,12 @@ std::pair<ActionPerformed, BaseMessage*> Client::handleMessage(Message *msg) {
     }
     if(msg->getType() == MessageType::ACK) {
         AckMessage* ackMsg = dynamic_cast<AckMessage*>(msg);
-        if(rooms.find(ackMsg->getRoomId()) == rooms.end())
+        if(rooms.find(ackMsg->getRoomId()) == rooms.end()) {
             return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
-        if(!rooms[ackMsg->getRoomId()].amIAdmin())
+        }
+        if(!rooms[ackMsg->getRoomId()].amIAdmin()) {
             return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
+        }
         handleAckMessage(ackMsg);
         return std::pair(ActionPerformed::RECEIVED_ACK_FOR_ROOM_CREATION, (BaseMessage*)nullptr);
     }
