@@ -63,7 +63,11 @@ void Client::handleChatMessage(ChatMessage *msg) {
 void Client::deleteRoom(RoomDeletionMessage *msg) {
     if(rooms.find(msg->getRoomId()) == rooms.end())
         throw std::invalid_argument("Room does not exist");
-    rooms[msg->getRoomId()].deleteRoom(msg);
+    try{
+        rooms[msg->getRoomId()].deleteRoom(msg);
+    } catch (Room::DeleteMeException e) {
+        rooms.erase(msg->getRoomId());
+    }
 }
 
 RoomDeletionMessage *  Client::getRoomDeletionMessage(std::string roomId){
