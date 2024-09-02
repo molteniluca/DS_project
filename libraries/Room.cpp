@@ -129,12 +129,14 @@ void Room::displayMessage(ChatMessage *msg){
 
     std::cout << this->userId << " - " << this->roomId << " - Displayed message: " << message << " from user " << senderId << std::endl;
 
-    for (int i = 0; i < numParticipants; i++) {
-        if (deletionVectorClock[i] > vectorClock[i]) {
-            return;
+    if (scheduledForDeletion){
+        for (int i = 0; i < numParticipants; i++) {
+            if (deletionVectorClock[i] > vectorClock[i]) {
+                return;
+            }
         }
+        throw DeleteMeException(roomId);
     }
-    throw DeleteMeException(roomId);
 }
 
 void Room::processMessage(ChatMessage *msg) {
