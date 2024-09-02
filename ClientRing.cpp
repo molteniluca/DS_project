@@ -20,23 +20,37 @@ ClientRing::ClientRing() : ClientNetwork() {}
 
 void ClientRing::sendToAll(cMessage *msg)
 {
+    cMessage *cMsg = msg->dup();
     try{
-        send(msg, "out_left");
-    } catch(cRuntimeError e) {}
+        send(cMsg, "out_left");
+    } catch(cRuntimeError e) {
+        cancelAndDelete(cMsg);
+    }
 
+    cMsg = msg->dup();
     try{
-        send(msg->dup(), "out_right");
-    } catch(cRuntimeError e) {}
+        send(cMsg, "out_right");
+    } catch(cRuntimeError e) {
+        cancelAndDelete(cMsg);
+    }
 }
 
 void ClientRing::forward(cMessage *msg)
 {
-    if(std::string(msg->getArrivalGate()->getName()) == "in_left")
+    if(std::string(msg->getArrivalGate()->getName()) == "in_left") {
+        cMessage *cMsg = msg->dup();
         try{
-            send(msg, "out_right");
-        } catch(cRuntimeError e) {}
-    else if(std::string(msg->getArrivalGate()->getName()) == "in_right")
+            send(cMsg, "out_right");
+        } catch(cRuntimeError e) {
+            cancelAndDelete(cMsg);
+        }
+    }
+    else if(std::string(msg->getArrivalGate()->getName()) == "in_right") {
+        cMessage *cMsg = msg->dup();
         try{
-            send(msg, "out_left");
-        } catch(cRuntimeError e) {}
+            send(cMsg, "out_left");
+        } catch(cRuntimeError e) {
+            cancelAndDelete(cMsg);
+        }
+    }
 }

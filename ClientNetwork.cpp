@@ -40,11 +40,14 @@ void ClientNetwork::handleMessage(cMessage *msg)
 
             EV << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << endl;
             std::cout << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << std::endl;
+
+            cancelAndDelete(cMsg);
         }
     }
 
     forwardMessage(msg);
 
+    cancelAndDelete(msg);
     return;
 }
 
@@ -103,6 +106,7 @@ void ClientNetwork::handleEvent_RoomCreation()
     EV << this->getFullName() << " - Sent room creation: " << roomId << " with: " << vectorOfStrings_to_String(members) << endl;
     std::cout << this->getFullName() << " - Sent room creation: " << roomId << " with: " << vectorOfStrings_to_String(members) << std::endl;
 
+    cancelAndDelete(cMsg);
     delete msg;
     return;
 }
@@ -126,6 +130,7 @@ void ClientNetwork::handleEvent_SendMessage()
     EV << this->getFullName() << " - Sending message to room " << msg->getRoomId() << " - " << msg->getContent() << endl;
     std::cout << this->getFullName() << " - Sending message to room " << msg->getRoomId()  << " - " << msg->getContent() << std::endl;
 
+    cancelAndDelete(cMsg);
     delete msg;
     return;
 }
@@ -138,6 +143,7 @@ void ClientNetwork::handleEvent_ResendCreation() {
         sendToAll(cMsg);
         EV << this->getFullName() << " - Resending room creation: " << cMsg->par("roomId").stringValue() << endl;
         std::cout << this->getFullName() << " - Resending room creation: " << cMsg->par("roomId").stringValue() << std::endl;
+        cancelAndDelete(cMsg);
     }
 
 }
@@ -155,6 +161,7 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
         std::cout << this->getFullName() << " - Room created: " << msg->par("roomId").stringValue() << std::endl;
         EV << this->getFullName() << " - Ack sent: " << cMsg->par("roomId").stringValue() << endl;
         std::cout << this->getFullName() << " - Ack sent: " << cMsg->par("roomId").stringValue() << std::endl;
+        cancelAndDelete(cMsg);
     } else if(ap == ActionPerformed::RECEIVED_CHAT_MESSAGE) {
         EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message received: " << msg->par("message").stringValue() << endl;
         std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message received: " << msg->par("message").stringValue() << std::endl;
@@ -175,6 +182,7 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
             sendToAll(cMess);
             EV << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << endl;
             std::cout << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << std::endl;
+            cancelAndDelete(cMess);
         }else {
             EV << this->getFullName() << " - No message to replay room: " << msg->par("roomId").stringValue() << endl;
             std::cout << this->getFullName() << " - No message to replay room: " << msg->par("roomId").stringValue() << std::endl;
@@ -191,13 +199,11 @@ void ClientNetwork::forwardMessage(cMessage *msg)
         
         EV << this->getFullName() << " - Message forwarded: " << msg->getName() << " - Time to live: " << msg->par("timeToLive").longValue() << endl;
         std::cout << this->getFullName() << " - Message forwarded: " << msg->getName() << " - Time to live: " << msg->par("timeToLive").longValue() << std::endl;
-
-        return;
     }
     else {
         EV << this->getFullName() << " - time to live = 0 for message: " << msg->getName() << endl;
         std::cout << this->getFullName() << " - time to live = 0 for message: " << msg->getName() << std::endl;
-        delete msg;
-        return;
     }
+
+    return;
 }

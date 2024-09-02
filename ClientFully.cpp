@@ -35,10 +35,14 @@ void ClientFully::initialize()
 void ClientFully::sendToAll(cMessage *msg)
 {
     for(int i = 0; i < gateSize("out"); i++) {
-        if(i != this->myIndex)
+        if(i != this->myIndex) {
+            cMessage *cMsg = msg->dup();
             try{
-                send(msg->dup(), "out", i);
-            } catch(cRuntimeError e) {}
+                send(cMsg, "out", i);
+            } catch(cRuntimeError e) {
+                cancelAndDelete(cMsg);
+            }
+        }
     }
 }
 
@@ -46,10 +50,14 @@ void ClientFully::forward(cMessage *msg)
 {
     for(int i = 0; i < gateSize("out"); i++) {
         if(std::string(msg->getArrivalGate()->getFullName()) != "in" + std::to_string(i)) {
-            if(i != this->myIndex)
+            if(i != this->myIndex) {
+                cMessage *cMsg = msg->dup();
                 try{
-                    send(msg->dup(), "out", i);
-                } catch(cRuntimeError e) {}
+                    send(cMsg, "out", i);
+                } catch(cRuntimeError e) {
+                    cancelAndDelete(cMsg);
+                }
+            }
         }
     }
 }
