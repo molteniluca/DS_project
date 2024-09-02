@@ -2,6 +2,8 @@
 #define CLIENTNETWORK_HPP
 
 #include <omnetpp.h>
+#include <map>
+#include <string>
 
 #include "libraries/Client.hpp"
 
@@ -27,6 +29,7 @@ class ClientNetwork : public cSimpleModule
         void handleUserEvent(cMessage *msg);
         void handleEvent_RoomCreation();
         void handleEvent_SendMessage();
+        void handleEvent_ResendCreation();
 
         void handleReceivedMessage(cMessage *msg);
         void forwardMessage(cMessage *msg);

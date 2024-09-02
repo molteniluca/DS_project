@@ -1,4 +1,5 @@
-log_file_path = "test.log"
+# log_file_path = "test.log"
+log_file_path = "out.txt"
 
 rooms = {}
 messagesSent = {}

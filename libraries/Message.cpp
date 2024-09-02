@@ -22,6 +22,10 @@ Message* Message::createMessage(omnetpp::cMessage& msg) {
         std::string missingSenderId = std::string(msg.par("missingSenderId").stringValue());
         std::string roomId = std::string(msg.par("roomId").stringValue());
         return new AskMessage(missingMessageId, missingSenderId, roomId);
+    } else if (type == "ack") {
+        std::string userId = std::string(msg.par("userId").stringValue());
+        std::string roomId = std::string(msg.par("roomId").stringValue());
+        return new AckMessage(userId, roomId);
     } else {
         throw std::runtime_error("Unknown message type");
     }
@@ -114,4 +118,26 @@ omnetpp::cMessage* AskMessage::getCmessage() const {
 
 MessageType AskMessage::getType() const {
     return MessageType::ASK;
+}
+
+AckMessage::AckMessage(std::string userId, std::string roomId) : userId(userId), roomId(roomId) {}
+
+std::string AckMessage::getUserId() const {
+    return userId;
+}
+
+std::string AckMessage::getRoomId() const {
+    return roomId;
+}
+
+omnetpp::cMessage* AckMessage::getCmessage() const {
+    omnetpp::cMessage* msg = new omnetpp::cMessage(("ack message for room " + roomId).c_str());
+    msg->addPar("type").setStringValue("ack");
+    msg->addPar("userId").setStringValue(userId.c_str());
+    msg->addPar("roomId").setStringValue(roomId.c_str());
+    return msg;
+}
+
+MessageType AckMessage::getType() const {
+    return MessageType::ACK;
 }

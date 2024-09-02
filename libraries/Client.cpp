@@ -20,6 +20,17 @@ RoomCreationMessage* Client::createRoom(std::string roomId, std::vector<std::str
     return room.getMessageCreation();
 }
 
+std::set<RoomCreationMessage *> Client::creationToResend() {
+    std::set<RoomCreationMessage *> creationMessages;
+    for (auto& room : rooms) {
+        RoomCreationMessage* msg = room.second.getMessageCreationIfNotAcked();
+        if (msg != nullptr) {
+            creationMessages.insert(msg);
+        }
+    }
+    return creationMessages;
+}
+
 ChatMessage* Client::getMessage(std::string text, std::string roomId) {
     if(rooms.find(roomId) == rooms.end())
         throw std::invalid_argument("Room does not exist");
@@ -34,13 +45,18 @@ ChatMessage *Client::handleAskMessage(AskMessage *amsg) {
     return cm;
 }
 
-void Client::handleRoomCreation(RoomCreationMessage *msg) {
+AckMessage* Client::handleRoomCreation(RoomCreationMessage *msg) {
     Room room(*msg, userId);
     rooms[room.getRoomId()] = room;
+    return room.getAckMessage();
 }
 
 void Client::handleChatMessage(ChatMessage *msg) {
     rooms[msg->getRoomId()].processMessage(msg);
+}
+
+void Client::handleAckMessage(AckMessage *msg) {
+    rooms[msg->getRoomId()].acked(msg->getUserId());
 }
 
 std::pair<ActionPerformed, BaseMessage*> Client::handleMessage(Message *msg) {
@@ -52,8 +68,8 @@ std::pair<ActionPerformed, BaseMessage*> Client::handleMessage(Message *msg) {
         }
         if(rooms.find(roomMsg->getRoomId()) != rooms.end())
             return std::pair(ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE, (BaseMessage*)nullptr);
-        handleRoomCreation(roomMsg);
-        return std::pair(ActionPerformed::CREATED_ROOM, (BaseMessage*)nullptr);
+        AckMessage* ack = handleRoomCreation(roomMsg);
+        return std::pair(ActionPerformed::CREATED_ROOM, (BaseMessage*) ack);
     }
     if (msg->getType() == MessageType::CHAT) {
         ChatMessage* chatMsg = dynamic_cast<ChatMessage*>(msg);
@@ -72,6 +88,15 @@ std::pair<ActionPerformed, BaseMessage*> Client::handleMessage(Message *msg) {
             return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
         
         return std::pair(ActionPerformed::ASKED_FOR_MESSAGE, handleAskMessage(askMsg));
+    }
+    if(msg->getType() == MessageType::ACK) {
+        AckMessage* ackMsg = dynamic_cast<AckMessage*>(msg);
+        if(rooms.find(ackMsg->getRoomId()) == rooms.end())
+            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
+        if(!rooms[ackMsg->getRoomId()].amIAdmin())
+            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
+        handleAckMessage(ackMsg);
+        return std::pair(ActionPerformed::RECEIVED_ACK_FOR_ROOM_CREATION, (BaseMessage*)nullptr);
     }
 
     throw std::invalid_argument("Invalid message type");

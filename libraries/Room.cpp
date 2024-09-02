@@ -1,6 +1,7 @@
 #include "Room.hpp"
 
 #include <iostream> // For cout
+#include <algorithm> // For find
 
 #include "utils.hpp"
 
@@ -10,6 +11,13 @@ Room::Room(std::vector<std::string> participants, std::string adminId, std::stri
     this->roomId = roomId;
     this->userId = adminId;
     this->participants = participants;
+
+    // setting notAcked to all participants except the admin
+    this->notAcked = participants;
+    auto it = std::find(notAcked.begin(), notAcked.end(), adminId);
+    if (it != notAcked.end()) {
+        notAcked.erase(it);
+    }
     
     this->userIndex = lookupUserIndex(userId);
     if(userIndex == -1) {
@@ -25,7 +33,8 @@ Room::Room(RoomCreationMessage msg, std::string userId) {
     this->roomId = msg.getRoomId();
     this->participants = msg.getParticipants();
     this->userId = userId;
-
+    // Not setting notAcked here, as it is not the admin
+    
     this->userIndex = lookupUserIndex(userId);
     if(userIndex == -1) {
         throw std::runtime_error("User not found in participants");
@@ -43,7 +52,11 @@ Room::Room() {
     vectorClock = {};
 }
 
-int Room::lookupUserIndex(const std::string& userId) {
+bool Room::amIAdmin() const {
+    return userId == adminId;
+}
+
+int Room::lookupUserIndex(const std::string& userId) const {
     for(int i = 0; i < numParticipants; i++) {
         if(participants[i] == userId) {
             return i;
@@ -53,16 +66,30 @@ int Room::lookupUserIndex(const std::string& userId) {
     return -1;
 }
 
-std::string Room::getRoomId() {
+std::string Room::getRoomId() const {
     return roomId;
 }
 
-std::vector<std::string> Room::getParticipants() {
+std::vector<std::string> Room::getParticipants() const {
     return participants;
 }
 
-RoomCreationMessage* Room::getMessageCreation() {
+RoomCreationMessage* Room::getMessageCreation() const {
     return new RoomCreationMessage(adminId, roomId, participants);
+}
+
+RoomCreationMessage* Room::getMessageCreationIfNotAcked() const {
+    if (notAcked.empty()) {
+        return nullptr;
+    }
+    return new RoomCreationMessage(adminId, roomId, participants);
+}
+
+void Room::acked(std::string userId) {
+    auto it = std::find(notAcked.begin(), notAcked.end(), userId);
+    if (it != notAcked.end()) {
+        notAcked.erase(it);
+    }
 }
 
 ChatMessage* Room::getMessage(const std::string& message) {
@@ -72,6 +99,10 @@ ChatMessage* Room::getMessage(const std::string& message) {
     messages.insert(std::make_pair(vectorClock, *msg));
     
     return msg;
+}
+
+AckMessage* Room::getAckMessage() const {
+    return new AckMessage(roomId, userId);
 }
 
 void Room::displayMessage(ChatMessage *msg){
@@ -144,7 +175,7 @@ void Room::flushMessages() {
     }
 }
 
-bool Room::checkPrinted(ChatMessage *msg) {
+bool Room::checkPrinted(ChatMessage *msg) const {
     std::vector<int> receivedVectorClock = msg->getVectorClock();
     std::string senderId = msg->getSenderId();
 
@@ -159,7 +190,7 @@ bool Room::checkPrinted(ChatMessage *msg) {
     return false;
 }
 
-bool Room::checkReceived(ChatMessage *msg) {
+bool Room::checkReceived(ChatMessage *msg) const {
     if (checkPrinted(msg)) {
         return true;
     }

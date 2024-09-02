@@ -9,7 +9,8 @@ enum class MessageType {
     CREATE_ROOM,
     CHAT,
     UNKNOWN,
-    ASK
+    ASK,
+    ACK
 };
 
 class BaseMessage {
@@ -76,6 +77,22 @@ public:
 private:
     int missingMessageId;
     std::string missingSenderId;
+    std::string roomId;
+};
+
+class AckMessage : public Message {
+public:
+    AckMessage(std::string userId, std::string roomId);
+
+    std::string getUserId() const;
+    std::string getRoomId() const;
+
+    omnetpp::cMessage* getCmessage() const override;
+
+    MessageType getType() const override;
+
+private:
+    std::string userId;
     std::string roomId;
 };
 

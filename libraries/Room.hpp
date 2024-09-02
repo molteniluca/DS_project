@@ -15,25 +15,35 @@ public:
     // necessary for using Room in std::map
     Room();
 
-    std::string getRoomId();
+    bool amIAdmin() const;
 
-    std::vector<std::string> getParticipants();
+    std::string getRoomId() const;
 
-    RoomCreationMessage* getMessageCreation();
+    std::vector<std::string> getParticipants() const;
+
+    RoomCreationMessage* getMessageCreation() const;
+
+    RoomCreationMessage* getMessageCreationIfNotAcked() const;
 
     ChatMessage* getMessage(const std::string& message);
 
+    AckMessage* getAckMessage() const;
+
+    void acked(std::string userId);
+
     void processMessage(ChatMessage *msg);
 
-    bool checkReceived(ChatMessage *msg);
+    bool checkReceived(ChatMessage *msg) const;
 
-    bool checkPrinted(ChatMessage *msg);
+    bool checkPrinted(ChatMessage *msg) const;
 
     void flushMessages();
 
     void displayMessage(ChatMessage *msg);
 
-    int lookupUserIndex(const std::string& userId);
+    int lookupUserIndex(const std::string& userId) const;
+
+    
 
     std::list<AskMessage> getMissingMessages();
 
@@ -61,6 +71,7 @@ private:
     std::vector<int> vectorClock;   
     std::map<std::vector<int>, ChatMessage> messages;
     std::map<std::vector<int>, ChatMessage> messagesQueue;
+    std::vector<std::string> notAcked;
 };
 
 #endif // ROOM_HPP

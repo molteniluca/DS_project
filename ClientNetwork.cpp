@@ -1,5 +1,4 @@
 #include <vector>
-#include <string>
 #include <algorithm> // For find
 
 #include "ClientNetwork.hpp"
@@ -15,6 +14,7 @@ void ClientNetwork::initialize()
     timeToLive = getParentModule()->par("numClients").intValue() / 2;
     scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
     scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
+    scheduleAt(simTime() + 500, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
 }
 
 void ClientNetwork::handleMessage(cMessage *msg)
@@ -66,6 +66,11 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
                 handleEvent_SendMessage();
             }
             scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
+            break;
+        
+        case UserEvent::RESEND_CREATION:
+            handleEvent_ResendCreation();
+            scheduleAt(simTime() + 500, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
             break;
 
         default:
@@ -125,13 +130,31 @@ void ClientNetwork::handleEvent_SendMessage()
     return;
 }
 
+void ClientNetwork::handleEvent_ResendCreation() {
+    std::set<RoomCreationMessage *> creationMsgs = client->creationToResend();
+    for(RoomCreationMessage * msg : creationMsgs) {
+        cMessage *cMsg = msg->getCmessage();
+        cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+        sendToAll(cMsg);
+        EV << this->getFullName() << " - Resending room creation: " << cMsg->par("roomId").stringValue() << endl;
+        std::cout << this->getFullName() << " - Resending room creation: " << cMsg->par("roomId").stringValue() << std::endl;
+    }
+
+}
+
 void ClientNetwork::handleReceivedMessage(cMessage *msg)
 {
     std::pair<ActionPerformed, BaseMessage *> result = client->handleMessage(Message::createMessage(*msg));
     ActionPerformed ap = result.first;
     if(ap == ActionPerformed::CREATED_ROOM) {
+        AckMessage *ack = (AckMessage *)result.second;
+        cMessage *cMsg = ack->getCmessage();
+        cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+        sendToAll(cMsg);
         EV << this->getFullName() << " - Room created: " << msg->par("roomId").stringValue() << endl;
         std::cout << this->getFullName() << " - Room created: " << msg->par("roomId").stringValue() << std::endl;
+        EV << this->getFullName() << " - Ack sent: " << cMsg->par("roomId").stringValue() << endl;
+        std::cout << this->getFullName() << " - Ack sent: " << cMsg->par("roomId").stringValue() << std::endl;
     } else if(ap == ActionPerformed::RECEIVED_CHAT_MESSAGE) {
         EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message received: " << msg->par("message").stringValue() << endl;
         std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message received: " << msg->par("message").stringValue() << std::endl;
