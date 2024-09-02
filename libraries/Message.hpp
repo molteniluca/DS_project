@@ -6,11 +6,12 @@
 #include <omnetpp.h>
 
 enum class MessageType {
+    DELETE_ROOM,
     CREATE_ROOM,
     CHAT,
     UNKNOWN,
     ASK,
-    ACK
+    ACK,
 };
 
 class BaseMessage {
@@ -40,6 +41,22 @@ private:
     std::string adminId;
     std::string roomId;
     std::vector<std::string> participants;
+};
+
+class RoomDeletionMessage : public Message {
+public:
+    RoomDeletionMessage(std::string roomId, std::vector<int> vectorClock);
+
+    std::string getRoomId() const;
+
+    omnetpp::cMessage* getCmessage() const override;
+
+    MessageType getType() const override;
+
+    const std::vector<int>& getVectorClock() const;
+private:
+    std::string roomId;
+    std::vector<int> vectorClock;
 };
 
 class ChatMessage : public Message {

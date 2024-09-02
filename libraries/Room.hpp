@@ -43,7 +43,9 @@ public:
 
     int lookupUserIndex(const std::string& userId) const;
 
-    
+    void deleteRoom(RoomDeletionMessage *msg);
+
+    std::vector<int> getVectorClock() { return vectorClock; }    
 
     std::list<AskMessage> getMissingMessages();
 
@@ -60,18 +62,32 @@ public:
             std::list<AskMessage> missingMessages;        
     };
 
+    class DeleteMeException : public std::exception {
+        virtual const char* what() const throw() {
+            return "Delete me";
+        }
+
+        public:
+            DeleteMeException(std::string roomId) : roomId(roomId) {}
+            std::string getRoomId() const { return roomId; }
+            std::string roomId;
+    };
+
 
 private:
     int numParticipants;
     int userIndex;
+    bool scheduledForDeletion = false;
     std::string userId;
     std::string adminId;
     std::string roomId;
     std::vector<std::string> participants;
     std::vector<int> vectorClock;   
+    std::vector<int> deletionVectorClock;
     std::map<std::vector<int>, ChatMessage> messages;
     std::map<std::vector<int>, ChatMessage> messagesQueue;
     std::vector<std::string> notAcked;
+    std::vector<std::string> notDeleteAcked;
 };
 
 #endif // ROOM_HPP

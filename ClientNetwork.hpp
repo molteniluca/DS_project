@@ -1,6 +1,8 @@
 #ifndef CLIENTNETWORK_HPP
 #define CLIENTNETWORK_HPP
 
+#define ROOM_LIVE_TIME 50000
+
 #include <omnetpp.h>
 #include <map>
 #include <string>
@@ -30,6 +32,7 @@ class ClientNetwork : public cSimpleModule
         void handleEvent_RoomCreation();
         void handleEvent_SendMessage();
         void handleEvent_ResendCreation();
+        void handleEvent_deleteFirstRoom();
 
         void handleReceivedMessage(cMessage *msg);
         void forwardMessage(cMessage *msg);

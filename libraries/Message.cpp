@@ -26,6 +26,10 @@ Message* Message::createMessage(omnetpp::cMessage& msg) {
         std::string userId = std::string(msg.par("userId").stringValue());
         std::string roomId = std::string(msg.par("roomId").stringValue());
         return new AckMessage(userId, roomId);
+    } else if (type == "delete_room") {
+        std::string roomId = std::string(msg.par("roomId").stringValue());
+        std::vector<int> vectorClock = string_to_vectorOfInts(std::string(msg.par("vectorClock").stringValue()));
+        return new RoomDeletionMessage(roomId, vectorClock);
     } else {
         throw std::runtime_error("Unknown message type");
     }
@@ -140,4 +144,27 @@ omnetpp::cMessage* AckMessage::getCmessage() const {
 
 MessageType AckMessage::getType() const {
     return MessageType::ACK;
+}
+
+RoomDeletionMessage::RoomDeletionMessage(std::string roomId, std::vector<int> vectorClock)
+    : roomId(roomId), vectorClock(vectorClock) {}
+
+MessageType RoomDeletionMessage::getType() const {
+    return MessageType::DELETE_ROOM;
+}
+
+std::string RoomDeletionMessage::getRoomId() const {
+    return roomId;
+}
+
+const std::vector<int>& RoomDeletionMessage::getVectorClock() const {
+    return vectorClock;
+}
+
+omnetpp::cMessage* RoomDeletionMessage::getCmessage() const {
+    omnetpp::cMessage* msg = new omnetpp::cMessage(("deletion of room " + roomId).c_str());
+    msg->addPar("type").setStringValue("delete_room");
+    msg->addPar("roomId").setStringValue(roomId.c_str());
+    msg->addPar("vectorClock").setStringValue(vectorOfInts_to_String(vectorClock).c_str());
+    return msg;
 }
