@@ -14,7 +14,7 @@ enum class ActionPerformed {
     DISCARDED_NON_RECIPIENT_MESSAGE,
     RECEIVED_CHAT_MESSAGE,
     DISCARDED_ALREADY_RECEIVED_MESSAGE,
-    ASKED_FOR_MESSAGE,
+    ANSWERED_ASK_FOR_MESSAGE,
     RECEIVED_ACK_FOR_ROOM_CREATION
 };
 
@@ -36,6 +36,7 @@ public:
     std::set<RoomCreationMessage *> creationToResend();
     ChatMessage* getMessage(std::string text, std::string roomId);
     std::pair<ActionPerformed, BaseMessage *> handleMessage(Message *msg);
+    std::list<AskMessage> askMessages();
 };
 
 #endif // CLIENT_HPP

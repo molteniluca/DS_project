@@ -31,6 +31,7 @@ class ClientNetwork : public cSimpleModule
         void handleEvent_RoomCreation();
         void handleEvent_SendMessage();
         void handleEvent_ResendCreation();
+        void handleEvent_AskMessages();
 
         void handleReceivedMessage(cMessage *msg);
         void forwardMessage(cMessage *msg);

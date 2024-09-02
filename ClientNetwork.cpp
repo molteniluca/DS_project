@@ -15,7 +15,8 @@ void ClientNetwork::initialize()
     timeToLive = getParentModule()->par("numClients").intValue() / 2;
     scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
     scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
-    scheduleAt(simTime() + 500, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
+    scheduleAt(simTime() + 200, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
+    scheduleAt(simTime() + 200, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
 }
 
 void ClientNetwork::handleMessage(cMessage *msg)
@@ -32,8 +33,7 @@ void ClientNetwork::handleMessage(cMessage *msg)
 
     try{
         handleReceivedMessage(msg);
-    }
-    catch(Room::QueueTooLongException &e) {
+    } catch (Room::QueueTooLongException &e) {
         for(AskMessage am : e.missingMessages) {
             cMessage *cMsg = am.getCmessage();
             cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
@@ -78,7 +78,12 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
         
         case UserEvent::RESEND_CREATION:
             handleEvent_ResendCreation();
-            scheduleAt(simTime() + 100, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
+            scheduleAt(simTime() + 200, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
+            break;
+        
+        case UserEvent::ASK_MESSAGES:
+            handleEvent_AskMessages();
+            scheduleAt(simTime() + 200, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
             break;
 
         default:
@@ -153,6 +158,20 @@ void ClientNetwork::handleEvent_ResendCreation() {
 
 }
 
+void ClientNetwork::handleEvent_AskMessages() {
+    std::list<AskMessage> messages = client->askMessages();
+    for(AskMessage am : messages) {
+        cMessage *cMsg = am.getCmessage();
+        cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+        sendToAll(cMsg);
+
+        EV << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << endl;
+        std::cout << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << std::endl;
+
+        cancelAndDelete(cMsg);
+    }
+}
+
 void ClientNetwork::handleReceivedMessage(cMessage *msg)
 {
     std::pair<ActionPerformed, BaseMessage *> result = client->handleMessage(Message::createMessage(*msg));
@@ -176,7 +195,7 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
     } else if(ap == ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE) {
         EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message discarded for I'm not a recipient: " << endl;
         std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message discarded for I'm not a recipient: " << std::endl;
-    } else if(ap == ActionPerformed::ASKED_FOR_MESSAGE) {
+    } else if(ap == ActionPerformed::ANSWERED_ASK_FOR_MESSAGE) {
         EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message: " << msg->par("missingMessageId").longValue() << endl;
         std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message: " << msg->par("missingMessageId").longValue() << std::endl;
 

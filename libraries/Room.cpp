@@ -128,6 +128,10 @@ void Room::processMessage(ChatMessage *msg) {
     }
 }
 
+std::list<AskMessage> Room::askMessages() {
+    return getMissingMessages();
+}
+
 std::list<AskMessage> Room::getMissingMessages() {
     std::string missingSenderId;
     std::list<AskMessage> missingMessagesList;

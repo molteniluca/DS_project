@@ -43,8 +43,8 @@ public:
 
     int lookupUserIndex(const std::string& userId) const;
 
+    std::list<AskMessage> askMessages();
     
-
     std::list<AskMessage> getMissingMessages();
 
     ChatMessage* resendMessage(AskMessage *amsg);

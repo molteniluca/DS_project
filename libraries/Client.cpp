@@ -87,7 +87,7 @@ std::pair<ActionPerformed, BaseMessage*> Client::handleMessage(Message *msg) {
         if(rooms.find(askMsg->getRoomId()) == rooms.end())
             return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
         
-        return std::pair(ActionPerformed::ASKED_FOR_MESSAGE, handleAskMessage(askMsg));
+        return std::pair(ActionPerformed::ANSWERED_ASK_FOR_MESSAGE, handleAskMessage(askMsg));
     }
     if(msg->getType() == MessageType::ACK) {
         AckMessage* ackMsg = dynamic_cast<AckMessage*>(msg);
@@ -102,4 +102,13 @@ std::pair<ActionPerformed, BaseMessage*> Client::handleMessage(Message *msg) {
     }
 
     throw std::invalid_argument("Invalid message type");
+}
+
+std::list<AskMessage> Client::askMessages() {
+    std::list<AskMessage> askMessages;
+    for (auto& room : rooms) {
+        std::list<AskMessage> roomAskMessages = room.second.askMessages();
+        askMessages.insert(askMessages.end(), roomAskMessages.begin(), roomAskMessages.end());
+    }
+    return askMessages;
 }
