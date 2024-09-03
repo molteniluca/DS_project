@@ -64,7 +64,7 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
                 scheduleAt(simTime() + uniform(1000, 5000), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
             }
 
-            // scheduleAt(simTime() + ROOM_LIVE_TIME, new cMessage(ue_toString(UserEvent::DELETE_ROOM).c_str()));
+            scheduleAt(simTime() + ROOM_LIVE_TIME, new cMessage(ue_toString(UserEvent::DELETE_ROOM).c_str()));
             break;
 
         case UserEvent::SEND_MESSAGE:

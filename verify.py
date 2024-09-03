@@ -9,6 +9,7 @@ else:
 rooms = {}
 messagesSent = {}
 messagesReceived = {}
+room_deleted = {}
 
 
 
@@ -55,6 +56,18 @@ def messageSent(client, room, message):
     
 def roomCreated(roomName, client, clients):
     rooms[roomName]=(client,clients)
+    
+def roomDeleted(roomName, admin):
+    try:
+        msg1 = messagesReceived[admin][roomName]
+    except KeyError:
+        msg1 = []
+    try:
+        msg2 = messagesSent[roomName][admin]
+    except KeyError:
+        msg2 = []
+    
+    room_deleted[roomName] = msg1+msg2
 
 
 with open(log_file_path, "r") as log_file:
@@ -78,6 +91,11 @@ with open(log_file_path, "r") as log_file:
             clients = line.split("with: ")[1].split(",")
             client = line.split("-")[0].strip()
             roomCreated(roomName, client, clients)
+        # parse line client[4] - Deleting room: stanza(client[1], 0)
+        if "Deleting room" in line:
+            roomName = line.split("Deleting room: ")[1].strip()
+            admin = line.split("-")[0].strip()
+            roomDeleted(roomName, admin)
 
 
 ## Test 1: Check that all messages sent are received
@@ -87,10 +105,18 @@ for room in messagesSent:
             for rec_client in rooms[room][1]:
                 try:
                     if message not in messagesReceived[rec_client][room] and rec_client != client:
-                        print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
+                        if room in room_deleted:
+                            if message in room_deleted[room]:
+                                print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
+                        else:
+                            print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client + " but was not deleted")
                 except KeyError:
                     if (rec_client != client):
-                        print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
+                        if room in room_deleted:
+                            if message in room_deleted[room]:
+                                print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
+                        else:
+                            print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client + " but was not deleted")
 
 # Test 2: Messages dont get displayed if the client is not in the room
 for client in messagesReceived:
