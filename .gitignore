@@ -1,8 +1,18 @@
-results
+# roba vscode
+.vscode
+
+# output make
 DS_project
 out
-.metadata
-.vscode
+
+# output omnnetpp simulation
+results
 .qtenvrc
+.cmdenv-log
+
+# our outputs
 test.log
 out.txt
+verify/log/*
+
+.metadata
