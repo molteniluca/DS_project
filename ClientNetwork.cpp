@@ -12,11 +12,11 @@ void ClientNetwork::initialize()
 {
     stopEventTime = getParentModule()->par("stopEventTime").doubleValue();
     client = new Client(std::string(this->getFullName()));
-    timeToLive = getParentModule()->par("numClients").intValue() / 2;
+    timeToLive = getParentModule()->par("numClients").intValue();
     scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
     scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
-    scheduleAt(simTime() + 200, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
-    scheduleAt(simTime() + 200, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
+    scheduleAt(simTime() + 500, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
+    scheduleAt(simTime() + 500, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
 }
 
 void ClientNetwork::handleMessage(cMessage *msg)
@@ -64,7 +64,7 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
                 scheduleAt(simTime() + uniform(1000, 5000), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
             }
 
-            scheduleAt(simTime() + ROOM_LIVE_TIME, new cMessage(ue_toString(UserEvent::DELETE_ROOM).c_str()));
+            // scheduleAt(simTime() + ROOM_LIVE_TIME, new cMessage(ue_toString(UserEvent::DELETE_ROOM).c_str()));
             break;
 
         case UserEvent::SEND_MESSAGE:
@@ -73,18 +73,18 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
                 handleEvent_SendMessage();
             }
             if(simTime() < this->stopEventTime) {
-                scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
+                scheduleAt(simTime() + uniform(100, 500), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
             }
             break;
         
         case UserEvent::RESEND_CREATION:
             handleEvent_ResendCreation();
-            scheduleAt(simTime() + 200, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
+            scheduleAt(simTime() + 1000, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
             break;
         
         case UserEvent::ASK_MESSAGES:
             handleEvent_AskMessages();
-            scheduleAt(simTime() + 200, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
+            scheduleAt(simTime() + 1000, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
             break;
 
         case UserEvent::DELETE_ROOM:

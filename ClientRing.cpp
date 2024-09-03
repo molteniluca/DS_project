@@ -10,6 +10,7 @@ class ClientRing : public ClientNetwork
         ClientRing();
 
     protected:
+        virtual void initialize() override;
         virtual void sendToAll(cMessage *msg) override;
         virtual void forward(cMessage *msg) override;
 };
@@ -17,6 +18,12 @@ class ClientRing : public ClientNetwork
 Define_Module(ClientRing);
 
 ClientRing::ClientRing() : ClientNetwork() {}
+
+void ClientRing::initialize()
+{
+    ClientNetwork::initialize();
+    this->timeToLive = getParentModule()->par("numClients").intValue() / 2;
+}
 
 void ClientRing::sendToAll(cMessage *msg)
 {
