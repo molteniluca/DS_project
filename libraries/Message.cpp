@@ -18,10 +18,9 @@ Message* Message::createMessage(omnetpp::cMessage& msg) {
         std::vector<std::string> participants = string_to_vectorOfStrings(std::string(msg.par("participants").stringValue()));
         return new RoomCreationMessage(adminId, roomId, participants);
     } else if (type == "ask") {
-        int missingMessageId = msg.par("missingMessageId").longValue();
-        std::string missingSenderId = std::string(msg.par("missingSenderId").stringValue());
         std::string roomId = std::string(msg.par("roomId").stringValue());
-        return new AskMessage(missingMessageId, missingSenderId, roomId);
+        std::vector<int> vectorClock = string_to_vectorOfInts(std::string(msg.par("vectorClock").stringValue()));
+        return new AskMessage(roomId, vectorClock);
     } else if (type == "ack") {
         std::string userId = std::string(msg.par("userId").stringValue());
         std::string roomId = std::string(msg.par("roomId").stringValue());
@@ -96,15 +95,11 @@ MessageType ChatMessage::getType() const {
     return MessageType::CHAT;
 }
 
-AskMessage::AskMessage(int missingMessageId, std::string missingSenderId, std::string roomId)
-    : missingMessageId(missingMessageId), missingSenderId(missingSenderId), roomId(roomId) {}
+AskMessage::AskMessage(std::string roomId, std::vector<int> &missingVectorClock)
+    : missingVectorClock(missingVectorClock), roomId(roomId) {}
 
-int AskMessage::getMissingMessageId() const {
-    return missingMessageId;
-}
-
-std::string AskMessage::getMissingSenderId() const {
-    return missingSenderId;
+std::vector<int> AskMessage::getMissingVectorClock() const {
+    return missingVectorClock;
 }
 
 std::string AskMessage::getRoomId() const {
@@ -112,11 +107,10 @@ std::string AskMessage::getRoomId() const {
 }
 
 omnetpp::cMessage* AskMessage::getCmessage() const {
-    omnetpp::cMessage* msg = new omnetpp::cMessage(("ask message for missing message " + std::to_string(missingMessageId)).c_str());
+    omnetpp::cMessage* msg = new omnetpp::cMessage(("ask message for room " + roomId).c_str());
     msg->addPar("type").setStringValue("ask");
-    msg->addPar("missingMessageId").setLongValue(missingMessageId);
-    msg->addPar("missingSenderId").setStringValue(missingSenderId.c_str());
     msg->addPar("roomId").setStringValue(roomId.c_str());
+    msg->addPar("vectorClock").setStringValue(vectorOfInts_to_String(missingVectorClock).c_str());
     return msg;
 }
 

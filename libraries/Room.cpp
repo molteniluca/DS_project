@@ -155,35 +155,30 @@ void Room::processMessage(ChatMessage *msg) {
     }
 }
 
-std::list<AskMessage> Room::askMessages() {
+AskMessage *Room::askMessages() {
     return getMissingMessages();
 }
 
-std::list<AskMessage> Room::getMissingMessages() {
-    std::string missingSenderId;
-    std::list<AskMessage> missingMessagesList;
-
-    for(int i = 0; i < numParticipants; i++) {
-        AskMessage missingMessage = *(new AskMessage(vectorClock[i]+1, participants[i], roomId));
-        missingMessagesList.push_back(missingMessage);
-    }
-
-    return missingMessagesList;
+AskMessage *Room::getMissingMessages() {
+    return new AskMessage(roomId, vectorClock);
 }
 
-ChatMessage* Room::resendMessage(AskMessage *amsg) {
-    int missingMessageId = amsg->getMissingMessageId();
-    std::string missingSenderId = amsg->getMissingSenderId();
+std::vector<ChatMessage*> Room::resendMessage(AskMessage *amsg) {
+    std::vector<ChatMessage*> replayMessages;
 
-    for(auto it = messages.begin(); it != messages.end(); it++) {
-        std::vector<int> messageVectorClock = it->first;
-        ChatMessage *message = &it->second;
-        if(message->getSenderId() == missingSenderId && missingMessageId == messageVectorClock[lookupUserIndex(missingSenderId)]) {
-            return message;
+    std::vector<int> missingVectorClock = amsg->getMissingVectorClock();
+
+    for(int i = 0; i < numParticipants; i++) {
+        for(auto it = messages.begin(); it != messages.end(); it++) {
+            std::vector<int> messageVectorClock = it->first;
+            ChatMessage *message = &it->second;
+            if(message->getSenderId() == participants[i] && messageVectorClock[i] > missingVectorClock[i]) {
+                replayMessages.push_back(message);
+            }
         }
     }
 
-    return nullptr;
+    return replayMessages;
 }
 
 

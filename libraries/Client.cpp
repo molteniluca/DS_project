@@ -40,8 +40,8 @@ ChatMessage* Client::getMessage(std::string text, std::string roomId) {
     return msg;
 }
 
-ChatMessage *Client::handleAskMessage(AskMessage *amsg) {
-    ChatMessage *cm = rooms[amsg->getRoomId()].resendMessage(amsg);
+std::vector<ChatMessage*> Client::handleAskMessage(AskMessage *amsg) {
+    std::vector<ChatMessage*> cm = rooms[amsg->getRoomId()].resendMessage(amsg);
     return cm;
 }
 
@@ -80,67 +80,70 @@ void Client::handleAckMessage(AckMessage *msg) {
     rooms[msg->getRoomId()].acked(msg->getUserId());
 }
 
-std::pair<ActionPerformed, BaseMessage*> Client::handleMessage(Message *msg) {
+std::pair<ActionPerformed, std::vector<BaseMessage*>> * Client::handleMessage(Message *msg) {
     if (msg->getType() == MessageType::CREATE_ROOM) {
         RoomCreationMessage *roomMsg = dynamic_cast<RoomCreationMessage*>(msg);
         std::vector<std::string> participants = roomMsg->getParticipants();
         if(std::find(participants.begin(), participants.end(), userId) == participants.end()){
-            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
+            return new std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, std::vector<BaseMessage*>());
         }
         if(rooms.find(roomMsg->getRoomId()) != rooms.end())
-            return std::pair(ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE, (BaseMessage*)nullptr);
-        AckMessage* ack = handleRoomCreation(roomMsg);
-        return std::pair(ActionPerformed::CREATED_ROOM, (BaseMessage*) ack);
+            return new std::pair(ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE, std::vector<BaseMessage*>());
+        std::vector<BaseMessage*> ack = std::vector<BaseMessage*>();
+        ack.push_back(handleRoomCreation(roomMsg));
+        return new std::pair(ActionPerformed::CREATED_ROOM,ack);
     }
     if (msg->getType() == MessageType::CHAT) {
         ChatMessage* chatMsg = dynamic_cast<ChatMessage*>(msg);
         if(rooms.find(chatMsg->getRoomId()) == rooms.end())
-            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
+            return new std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, std::vector<BaseMessage*>());
         if (rooms[chatMsg->getRoomId()].checkReceived(chatMsg)) {
-            return std::pair(ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE, (BaseMessage*)nullptr);
+            return new std::pair(ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE, std::vector<BaseMessage*>());
         }
         handleChatMessage(chatMsg);
         /// TODO: differentiate between displayed and queued messages
-        return std::pair(ActionPerformed::RECEIVED_CHAT_MESSAGE, (BaseMessage*)nullptr);
+        return new std::pair(ActionPerformed::RECEIVED_CHAT_MESSAGE, std::vector<BaseMessage*>());
     }
     if (msg->getType() == MessageType::ASK) {
         AskMessage* askMsg = dynamic_cast<AskMessage*>(msg);
         if(rooms.find(askMsg->getRoomId()) == rooms.end())
-            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
+            return new std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, std::vector<BaseMessage*>());
         
-        return std::pair(ActionPerformed::ANSWERED_ASK_FOR_MESSAGE, handleAskMessage(askMsg));
+        std::vector<BaseMessage *> cm = std::vector<BaseMessage *>();
+        std::vector<ChatMessage*> chatMessages = handleAskMessage(askMsg);
+        cm.insert(cm.end(), chatMessages.begin(), chatMessages.end());
+        return new std::pair(ActionPerformed::ANSWERED_ASK_FOR_MESSAGE, cm);
     }
     if(msg->getType() == MessageType::ACK) {
         AckMessage* ackMsg = dynamic_cast<AckMessage*>(msg);
         if(rooms.find(ackMsg->getRoomId()) == rooms.end()) {
-            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
+            return new std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, std::vector<BaseMessage*>());
         }
         if(!rooms[ackMsg->getRoomId()].amIAdmin()) {
-            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
+            return new std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, std::vector<BaseMessage*>());
         }
         handleAckMessage(ackMsg);
-        return std::pair(ActionPerformed::RECEIVED_ACK_FOR_ROOM_CREATION, (BaseMessage*)nullptr);
+        return new std::pair(ActionPerformed::RECEIVED_ACK_FOR_ROOM_CREATION, std::vector<BaseMessage*>());
     }
     if(msg->getType() == MessageType::DELETE_ROOM) {
         RoomDeletionMessage* delMsg = dynamic_cast<RoomDeletionMessage*>(msg);
         if(rooms.find(delMsg->getRoomId()) == rooms.end())
-            return std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, (BaseMessage*)nullptr);
+            return new std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, std::vector<BaseMessage*>());
         try{
             rooms.find(delMsg->getRoomId())->second.deleteRoom(delMsg);
         } catch (Room::DeleteMeException e) {
             rooms.erase(delMsg->getRoomId());
         }
-        return std::pair(ActionPerformed::ROOM_DELETED, (BaseMessage*)nullptr);
+        return new std::pair(ActionPerformed::ROOM_DELETED, std::vector<BaseMessage*>());
     }
 
     throw std::invalid_argument("Invalid message type");
 }
 
 std::list<AskMessage> Client::askMessages() {
-    std::list<AskMessage> askMessages;
+    std::list<AskMessage> askMessages = std::list<AskMessage>();
     for (auto& room : rooms) {
-        std::list<AskMessage> roomAskMessages = room.second.askMessages();
-        askMessages.insert(askMessages.end(), roomAskMessages.begin(), roomAskMessages.end());
+        askMessages.push_back(*room.second.askMessages());
     }
     return askMessages;
 }

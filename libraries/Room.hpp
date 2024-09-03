@@ -43,15 +43,15 @@ public:
 
     int lookupUserIndex(const std::string& userId) const;
 
-    std::list<AskMessage> askMessages();
+    AskMessage *askMessages();
     
     void deleteRoom(RoomDeletionMessage *msg);
 
     std::vector<int> getVectorClock() { return vectorClock; }    
 
-    std::list<AskMessage> getMissingMessages();
+    AskMessage *getMissingMessages();
 
-    ChatMessage* resendMessage(AskMessage *amsg);
+    std::vector<ChatMessage *> resendMessage(AskMessage *amsg);
 
 
     class QueueTooLongException : public std::exception {
@@ -60,8 +60,8 @@ public:
         }
 
         public:
-            QueueTooLongException(std::list<AskMessage> missingMessages) : missingMessages(missingMessages) {}
-            std::list<AskMessage> missingMessages;        
+            QueueTooLongException(AskMessage *missingMessages) : missingMessages(missingMessages) {}
+            AskMessage *missingMessages;        
     };
 
     class DeleteMeException : public std::exception {

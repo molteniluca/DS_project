@@ -34,16 +34,15 @@ void ClientNetwork::handleMessage(cMessage *msg)
     try{
         handleReceivedMessage(msg);
     } catch (Room::QueueTooLongException &e) {
-        for(AskMessage am : e.missingMessages) {
-            cMessage *cMsg = am.getCmessage();
-            cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
-            sendToAll(cMsg);
+        AskMessage *am = e.missingMessages;
+        cMessage *cMsg = am->getCmessage();
+        cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+        sendToAll(cMsg);
 
-            EV << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << endl;
-            std::cout << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << std::endl;
+        EV << this->getFullName() << " - Asked for message: " << vectorOfInts_to_String(am->getMissingVectorClock()) << " - Room: " << am->getRoomId() << endl;
+        std::cout << this->getFullName() << " - Asked for message: " << vectorOfInts_to_String(am->getMissingVectorClock()) << " - Room: " << am->getRoomId() << std::endl;
 
-            cancelAndDelete(cMsg);
-        }
+        cancelAndDelete(cMsg);
     }
 
     forwardMessage(msg);
@@ -192,8 +191,8 @@ void ClientNetwork::handleEvent_AskMessages() {
         cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
         sendToAll(cMsg);
 
-        EV << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << endl;
-        std::cout << this->getFullName() << " - Asked for message: " << am.getMissingMessageId() << " - Room: " << am.getRoomId() << std::endl;
+        EV << this->getFullName() << " - Asked for message: " << vectorOfInts_to_String(am.getMissingVectorClock()) << " - Room: " << am.getRoomId() << endl;
+        std::cout << this->getFullName() << " - Asked for message: " << vectorOfInts_to_String(am.getMissingVectorClock()) << " - Room: " << am.getRoomId() << std::endl;
 
         cancelAndDelete(cMsg);
     }
@@ -201,10 +200,11 @@ void ClientNetwork::handleEvent_AskMessages() {
 
 void ClientNetwork::handleReceivedMessage(cMessage *msg)
 {
-    std::pair<ActionPerformed, BaseMessage *> result = client->handleMessage(Message::createMessage(*msg));
-    ActionPerformed ap = result.first;
+    std::pair<ActionPerformed, std::vector<BaseMessage*>>  *result = client->handleMessage(Message::createMessage(*msg));
+    ActionPerformed ap = result->first;
     if(ap == ActionPerformed::CREATED_ROOM) {
-        AckMessage *ack = (AckMessage *)result.second;
+        std::vector<BaseMessage*> ackList = (std::vector<BaseMessage *>)result->second;
+        AckMessage *ack = (AckMessage *) ackList[0];
         cMessage *cMsg = ack->getCmessage();
         cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
         sendToAll(cMsg);
@@ -223,20 +223,18 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
         EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message discarded for I'm not a recipient: " << endl;
         std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Message discarded for I'm not a recipient: " << std::endl;
     } else if(ap == ActionPerformed::ANSWERED_ASK_FOR_MESSAGE) {
-        EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message: " << msg->par("missingMessageId").longValue() << endl;
-        std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message: " << msg->par("missingMessageId").longValue() << std::endl;
+        EV << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message" << endl;
+        std::cout << this->getFullName() << " - Room: " << msg->par("roomId").stringValue() << " - Asked for message" << std::endl;
 
-        ChatMessage *cm = (ChatMessage *)result.second;
-        if (cm != nullptr) {
+        std::vector<BaseMessage *> messages = result->second;
+        for (BaseMessage *bm : messages) {
+            ChatMessage *cm = (ChatMessage *) bm;
             cMessage *cMess = cm->getCmessage();
             cMess->addPar("timeToLive").setLongValue(this->timeToLive);
             sendToAll(cMess);
             EV << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << endl;
             std::cout << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << std::endl;
             cancelAndDelete(cMess);
-        }else {
-            EV << this->getFullName() << " - No message to replay room: " << msg->par("roomId").stringValue() << endl;
-            std::cout << this->getFullName() << " - No message to replay room: " << msg->par("roomId").stringValue() << std::endl;
         }
     }
     return;

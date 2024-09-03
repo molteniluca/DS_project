@@ -26,7 +26,7 @@ private:
 
     AckMessage* handleRoomCreation(RoomCreationMessage *msg);
     void handleChatMessage(ChatMessage *msg);
-    ChatMessage* handleAskMessage(AskMessage *msg);
+    std::vector<ChatMessage*> handleAskMessage(AskMessage *msg);
     void handleAckMessage(AckMessage *msg);
 
 public:
@@ -36,7 +36,7 @@ public:
     RoomCreationMessage* createRoom(std::string roomId, std::vector<std::string> participants);
     std::set<RoomCreationMessage *> creationToResend();
     ChatMessage* getMessage(std::string text, std::string roomId);
-    std::pair<ActionPerformed, BaseMessage *> handleMessage(Message *msg);
+    std::pair<ActionPerformed, std::vector<BaseMessage*>> *handleMessage(Message *msg);
     std::list<AskMessage> askMessages();
     RoomDeletionMessage * getRoomDeletionMessage(std::string roomId);
     void deleteRoom(RoomDeletionMessage *msg);

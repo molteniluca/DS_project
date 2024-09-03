@@ -81,10 +81,9 @@ private:
 
 class AskMessage : public Message {
 public:
-    AskMessage(int missingMessageId, std::string missingSenderId, std::string RoomId);
+    AskMessage(std::string roomId, std::vector<int> &missingVectorClock);
     
-    int getMissingMessageId() const;
-    std::string getMissingSenderId() const;
+    std::vector<int> getMissingVectorClock() const;
     std::string getRoomId() const;
 
     omnetpp::cMessage* getCmessage() const override;
@@ -92,8 +91,7 @@ public:
     MessageType getType() const override;
 
 private:
-    int missingMessageId;
-    std::string missingSenderId;
+    std::vector<int> missingVectorClock;
     std::string roomId;
 };
 

@@ -89,7 +89,8 @@ for room in messagesSent:
                     if message not in messagesReceived[rec_client][room] and rec_client != client:
                         print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
                 except KeyError:
-                    print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
+                    if (rec_client != client):
+                        print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
 
 # Test 2: Messages dont get displayed if the client is not in the room
 for client in messagesReceived:
