@@ -117,7 +117,6 @@ void ClientNetwork::handleEvent_deleteFirstRoom()
     cMessage *cMsg = msg->getCmessage();
     cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
     sendToAll(cMsg);
-    cancelAndDelete(cMsg);
 
     EV << this->getFullName() << " - Deleting room: " << roomId << endl;
     std::cout << this->getFullName() << " - Deleting room: " << roomId << std::endl;
