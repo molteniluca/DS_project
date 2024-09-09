@@ -10,13 +10,27 @@ ClientNetwork::ClientNetwork() : cSimpleModule(), personalRoomId(0), personalMes
 
 void ClientNetwork::initialize()
 {
-    stopEventTime = getParentModule()->par("stopEventTime").doubleValue();
-    client = new Client(std::string(this->getFullName()));
-    timeToLive = getParentModule()->par("numClients").intValue();
-    scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
-    scheduleAt(simTime() + uniform(100, 300), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
-    scheduleAt(simTime() + 500, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
-    scheduleAt(simTime() + 500, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
+    this->createRoomMinTime = getParentModule()->par("createRoomMinTime").doubleValue();
+    this->createRoomMaxTime = getParentModule()->par("createRoomMaxTime").doubleValue();
+    this->createRoomProbability = getParentModule()->par("createRoomProbability").doubleValue();
+    this->sendMessageMinTime = getParentModule()->par("sendMessageMinTime").doubleValue();
+    this->sendMessageMaxTime = getParentModule()->par("sendMessageMaxTime").doubleValue();
+    this->sendMessageProbability = getParentModule()->par("sendMessageProbability").doubleValue();
+    this->resendCreationTime = getParentModule()->par("resendCreationTime").doubleValue();
+    this->askMessagesTime = getParentModule()->par("askMessagesTime").doubleValue();
+    this->deleteRoomMinTime = getParentModule()->par("deleteRoomMinTime").doubleValue();
+    this->deleteRoomMaxTime = getParentModule()->par("deleteRoomMaxTime").doubleValue();
+    this->deleteRoomProbability = getParentModule()->par("deleteRoomProbability").doubleValue();
+
+    this->stopEventTime = getParentModule()->par("stopEventTime").doubleValue();
+
+    this->client = new Client(std::string(this->getFullName()));
+    this->timeToLive = getParentModule()->par("numClients").intValue();
+
+    scheduleAt(simTime() + uniform(createRoomMinTime, createRoomMaxTime), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
+    scheduleAt(simTime() + uniform(sendMessageMinTime, sendMessageMaxTime), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
+    scheduleAt(simTime() + resendCreationTime, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
+    scheduleAt(simTime() + askMessagesTime, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
 }
 
 void ClientNetwork::handleMessage(cMessage *msg)
@@ -45,38 +59,40 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
     switch(re) {
 
         case UserEvent::CREATE_ROOM:
-            if(uniform(0, 1) < 0.2) {
+            if(uniform(0, 1) < createRoomProbability) {
                 handleEvent_RoomCreation();
             }
             if(simTime() < this->stopEventTime) {
-                scheduleAt(simTime() + uniform(1000, 5000), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
+                scheduleAt(simTime() + uniform(createRoomMinTime, createRoomMaxTime), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
             }
 
-            scheduleAt(simTime() + ROOM_LIVE_TIME, new cMessage(ue_toString(UserEvent::DELETE_ROOM).c_str()));
+            scheduleAt(simTime() + uniform(deleteRoomMinTime, deleteRoomMaxTime), new cMessage(ue_toString(UserEvent::DELETE_ROOM).c_str()));
             break;
 
         case UserEvent::SEND_MESSAGE:
 
-            if(uniform(0, 1) < 0.5) {
+            if(uniform(0, 1) < sendMessageProbability) {
                 handleEvent_SendMessage();
             }
             if(simTime() < this->stopEventTime) {
-                scheduleAt(simTime() + uniform(100, 500), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
+                scheduleAt(simTime() + uniform(sendMessageMinTime, sendMessageMaxTime), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
             }
             break;
 
         case UserEvent::RESEND_CREATION:
             handleEvent_ResendCreation();
-            scheduleAt(simTime() + 1000, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
+            scheduleAt(simTime() + resendCreationTime, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
             break;
 
         case UserEvent::ASK_MESSAGES:
-            scheduleAt(simTime() + 1000, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
+            scheduleAt(simTime() + askMessagesTime, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
             handleEvent_AskMessages();
             break;
 
         case UserEvent::DELETE_ROOM:
-            handleEvent_deleteFirstRoom();
+            if(uniform(0, 1) < deleteRoomProbability) {
+                handleEvent_deleteFirstRoom();
+            }
             break;
 
         default:
@@ -104,6 +120,10 @@ void ClientNetwork::handleEvent_deleteFirstRoom()
 
     EV << this->getFullName() << " - Deleting room: " << roomId << endl;
     std::cout << this->getFullName() << " - Deleting room: " << roomId << std::endl;
+
+    cancelAndDelete(cMsg);
+    delete msg;
+    
     return;
 }
 

@@ -46,7 +46,6 @@ std::set<std::tuple<std::string,std::string>> NetworkFullyBehavior::handleEvent_
         std::string gateName0 = std::get<0>(gate).substr(std::get<0>(gate).rfind(".") + 1, std::get<0>(gate).rfind("[") - std::get<0>(gate).rfind(".") - 1);
         int index0 = std::stoi(std::get<0>(gate).substr(std::get<0>(gate).rfind("[") + 1, std::get<0>(gate).rfind("]") - std::get<0>(gate).rfind("[") - 1));
 
-
         cGate *gate0 = this->getParentModule()->getModuleByPath(modulePath0.c_str())->gate(gateName0.c_str(), index0);
         gate0->disconnect();
     }
@@ -64,10 +63,14 @@ void NetworkFullyBehavior::handleEvent_endPartition(std::set<std::tuple<std::str
         std::string gateName1 = std::get<1>(gate).substr(std::get<1>(gate).rfind(".") + 1, std::get<1>(gate).rfind("[") - std::get<1>(gate).rfind(".") - 1);
         int index1 = std::stoi(std::get<1>(gate).substr(std::get<1>(gate).rfind("[") + 1, std::get<1>(gate).rfind("]") - std::get<1>(gate).rfind("[") - 1));
 
+        cChannel *channel = cDatarateChannel::create("channel");
+        channel->par("delay").setDoubleValue(this->linkDelay);
+        channel->par("datarate").setDoubleValue(this->linkDatarate);
+        
         cGate *gate0 = this->getParentModule()->getModuleByPath(modulePath0.c_str())->gate(gateName0.c_str(), index0);
         cGate *gate1 = this->getParentModule()->getModuleByPath(modulePath1.c_str())->gate(gateName1.c_str(), index1);
 
-        gate0->connectTo(gate1);
+        gate0->connectTo(gate1, channel);
     }
 
     return;

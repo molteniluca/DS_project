@@ -23,6 +23,12 @@ class ClientNetwork : public cSimpleModule
         int personalMessageId; // Used to create unique message ids
         double stopEventTime;
 
+        double createRoomMinTime, createRoomMaxTime, createRoomProbability,
+            sendMessageMinTime, sendMessageMaxTime, sendMessageProbability,
+            resendCreationTime,
+            askMessagesTime,
+            deleteRoomMinTime, deleteRoomMaxTime, deleteRoomProbability;
+
         virtual void initialize() override;
         virtual void handleMessage(cMessage *msg) override;
 

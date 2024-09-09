@@ -4,10 +4,23 @@
 
 #include "libraries/utils.hpp"
 
-NetworkBehavior::NetworkBehavior() : cSimpleModule() {}
+NetworkBehavior::NetworkBehavior() : cSimpleModule() {
+    this->stopEventTime = -1;
+    this->linkDelay = -1;
+    this->linkDatarate = -1;
+}
 
 void NetworkBehavior::initialize() {
-    stopEventTime = getParentModule()->par("stopEventTime").doubleValue();
+    this->partitionMinTime = getParentModule()->par("partitionMinTime").doubleValue();
+    this->partitionMaxTime = getParentModule()->par("partitionMaxTime").doubleValue();
+
+    this->endPartitionMinTime = getParentModule()->par("endPartitionMinTime").doubleValue();
+    this->endPartitionMaxTime = getParentModule()->par("endPartitionMaxTime").doubleValue();
+
+    this->stopEventTime = getParentModule()->par("stopEventTime").doubleValue();
+    this->linkDelay = getParentModule()->par("linkDelay").doubleValue();
+    this->linkDatarate = getParentModule()->par("linkDatarate").doubleValue();
+
     cMessage *partitionEvent = new cMessage(ne_toString(NetworkEvent::PARTITION).c_str());
     scheduleAt(simTime() + uniform(1000, 2000), partitionEvent);
 }
@@ -36,7 +49,7 @@ void NetworkBehavior::handleNetworkEvent(cMessage *msg) {
             gates = handleEvent_partition();
             cMessage *endPartitionEvent = new cMessage(ne_toString(NetworkEvent::END_PARTITION).c_str());
             endPartitionEvent->addPar("gates").setStringValue(setOfTuplesOfStrings_to_String(gates).c_str());
-            scheduleAt(simTime() + uniform(1000, 2000), endPartitionEvent);
+            scheduleAt(simTime() + uniform(endPartitionMinTime, endPartitionMaxTime), endPartitionEvent);
             EV << "Partitioning network" << endl;
             std::cout << "Partitioning network" << std::endl;
             break;
@@ -46,7 +59,7 @@ void NetworkBehavior::handleNetworkEvent(cMessage *msg) {
             handleEvent_endPartition(gates);
             cMessage *partitionEvent = new cMessage(ne_toString(NetworkEvent::PARTITION).c_str());
             if(simTime() < this->stopEventTime) {
-                scheduleAt(simTime() + uniform(1000, 2000), partitionEvent);
+                scheduleAt(simTime() + uniform(partitionMinTime, partitionMaxTime), partitionEvent);
             }
             EV << "Ending partition" << endl;
             std::cout << "Ending partition" << std::endl;

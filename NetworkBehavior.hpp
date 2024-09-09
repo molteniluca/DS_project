@@ -14,6 +14,12 @@ class NetworkBehavior : public cSimpleModule
         NetworkBehavior();
 
     protected:
+        double linkDelay,
+            linkDatarate;
+            
+        double partitionMinTime, partitionMaxTime,
+            endPartitionMinTime, endPartitionMaxTime;
+
         virtual void initialize() override;
         virtual void handleMessage(cMessage *msg) override;
 

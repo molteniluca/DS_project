@@ -56,10 +56,14 @@ void NetworkRingBehavior::handleEvent_endPartition(std::set<std::tuple<std::stri
         std::string modulePath1 = std::get<1>(gate).substr(0, std::get<1>(gate).rfind("."));
         std::string gateName1 = std::get<1>(gate).substr(std::get<1>(gate).rfind(".") + 1);
 
+        cChannel *channel = cDatarateChannel::create("channel");
+        channel->par("delay").setDoubleValue(this->linkDelay);
+        channel->par("datarate").setDoubleValue(this->linkDatarate);
+
         cGate *gate0 = this->getParentModule()->getModuleByPath(modulePath0.c_str())->gate(gateName0.c_str());
         cGate *gate1 = this->getParentModule()->getModuleByPath(modulePath1.c_str())->gate(gateName1.c_str());
 
-        gate0->connectTo(gate1);
+        gate0->connectTo(gate1, channel);
     }
 
     return;
