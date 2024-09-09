@@ -5,10 +5,20 @@
 
 Client::Client(std::string userId) : userId(userId) { }
 
-std::vector<std::string> Client::getRooms() {
+std::vector<std::string> Client::getNonDeletedRooms() {
     std::vector<std::string> roomIds;
     for (auto const& room : rooms) {
-        roomIds.push_back(room.first);
+        if (!room.second.isDeleted())
+            roomIds.push_back(room.first);
+    }
+    return roomIds;
+}
+
+std::vector<std::string> Client::getManagedNonDeletedRooms() {
+    std::vector<std::string> roomIds;
+    for (auto const& room : rooms) {
+        if (room.second.amIAdmin() && !room.second.isDeleted())
+            roomIds.push_back(room.first);
     }
     return roomIds;
 }
@@ -129,11 +139,6 @@ std::pair<ActionPerformed, std::vector<BaseMessage*>> * Client::handleMessage(Me
         RoomDeletionMessage* delMsg = dynamic_cast<RoomDeletionMessage*>(msg);
         if(rooms.find(delMsg->getRoomId()) == rooms.end())
             return new std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, std::vector<BaseMessage*>());
-        try{
-            rooms.find(delMsg->getRoomId())->second.deleteRoom(delMsg);
-        } catch (Room::DeleteMeException e) {
-            rooms.erase(delMsg->getRoomId());
-        }
         return new std::pair(ActionPerformed::ROOM_DELETED, std::vector<BaseMessage*>());
     }
 

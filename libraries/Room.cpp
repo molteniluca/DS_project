@@ -56,6 +56,10 @@ bool Room::amIAdmin() const {
     return userId == adminId;
 }
 
+bool Room::isDeleted() const {
+    return dead;
+}
+
 int Room::lookupUserIndex(const std::string& userId) const {
     for(int i = 0; i < numParticipants; i++) {
         if(participants[i] == userId) {
@@ -81,7 +85,7 @@ void Room::deleteRoom(RoomDeletionMessage *msg)
             return;
         }
     }
-    throw DeleteMeException(roomId);
+    dead = true;
 }
 
 std::string Room::getRoomId() const {
@@ -127,6 +131,9 @@ void Room::displayMessage(ChatMessage *msg){
     std::string message = msg->getContent();
     std::string senderId = msg->getSenderId();
 
+    if (dead) {
+        return;
+    }
     std::cout << this->userId << " - " << this->roomId << " - Displayed message: " << message << " from user " << senderId << std::endl;
 
     if (scheduledForDeletion){
@@ -135,7 +142,7 @@ void Room::displayMessage(ChatMessage *msg){
                 return;
             }
         }
-        throw DeleteMeException(roomId);
+        dead = true;
     }
 }
 
@@ -150,16 +157,9 @@ void Room::processMessage(ChatMessage *msg) {
     }else{
         messagesQueue.insert(std::make_pair(receivedVectorClock, *msg));
     }
-    if (messagesQueue.size() >= 5) {
-        throw QueueTooLongException(getMissingMessages());
-    }
 }
 
 AskMessage *Room::askMessages() {
-    return getMissingMessages();
-}
-
-AskMessage *Room::getMissingMessages() {
     return new AskMessage(roomId, vectorClock);
 }
 

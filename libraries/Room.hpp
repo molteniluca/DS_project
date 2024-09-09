@@ -43,13 +43,13 @@ public:
 
     int lookupUserIndex(const std::string& userId) const;
 
+    bool isDeleted() const;
+
     AskMessage *askMessages();
     
     void deleteRoom(RoomDeletionMessage *msg);
 
     std::vector<int> getVectorClock() { return vectorClock; }    
-
-    AskMessage *getMissingMessages();
 
     std::vector<ChatMessage *> resendMessage(AskMessage *amsg);
 
@@ -80,6 +80,7 @@ private:
     int numParticipants;
     int userIndex;
     bool scheduledForDeletion = false;
+    bool dead = false;
     std::string userId;
     std::string adminId;
     std::string roomId;

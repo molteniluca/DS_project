@@ -32,7 +32,8 @@ private:
 public:
     Client(std::string userId);
 
-    std::vector<std::string> getRooms();
+    std::vector<std::string> getNonDeletedRooms();
+    std::vector<std::string> getManagedNonDeletedRooms();
     RoomCreationMessage* createRoom(std::string roomId, std::vector<std::string> participants);
     std::set<RoomCreationMessage *> creationToResend();
     ChatMessage* getMessage(std::string text, std::string roomId);

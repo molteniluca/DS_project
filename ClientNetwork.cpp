@@ -24,26 +24,14 @@ void ClientNetwork::handleMessage(cMessage *msg)
     if(msg == nullptr) {
         return;
     }
-    
+
     if(msg->isSelfMessage()) {
         handleUserEvent(msg);
         delete msg;
         return;
     }
 
-    try{
-        handleReceivedMessage(msg);
-    } catch (Room::QueueTooLongException &e) {
-        AskMessage *am = e.missingMessages;
-        cMessage *cMsg = am->getCmessage();
-        cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
-        sendToAll(cMsg);
-
-        EV << this->getFullName() << " - Asked for message: " << vectorOfInts_to_String(am->getMissingVectorClock()) << " - Room: " << am->getRoomId() << endl;
-        std::cout << this->getFullName() << " - Asked for message: " << vectorOfInts_to_String(am->getMissingVectorClock()) << " - Room: " << am->getRoomId() << std::endl;
-
-        cancelAndDelete(cMsg);
-    }
+    handleReceivedMessage(msg);
 
     forwardMessage(msg);
 
@@ -68,7 +56,7 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
             break;
 
         case UserEvent::SEND_MESSAGE:
-        
+
             if(uniform(0, 1) < 0.5) {
                 handleEvent_SendMessage();
             }
@@ -76,15 +64,15 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
                 scheduleAt(simTime() + uniform(100, 500), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
             }
             break;
-        
+
         case UserEvent::RESEND_CREATION:
             handleEvent_ResendCreation();
             scheduleAt(simTime() + 1000, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
             break;
-        
+
         case UserEvent::ASK_MESSAGES:
-            handleEvent_AskMessages();
             scheduleAt(simTime() + 1000, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
+            handleEvent_AskMessages();
             break;
 
         case UserEvent::DELETE_ROOM:
@@ -100,7 +88,7 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
 
 void ClientNetwork::handleEvent_deleteFirstRoom()
 {
-    std::vector<std::string> rooms = client->getRooms();
+    std::vector<std::string> rooms = client->getManagedNonDeletedRooms();
     if(rooms.empty()) {
         EV << this->getFullName() << " - No rooms available" << endl;
         std::cout << this->getFullName() << " - No rooms available" << std::endl;
@@ -149,7 +137,7 @@ void ClientNetwork::handleEvent_RoomCreation()
 
 void ClientNetwork::handleEvent_SendMessage()
 {
-    std::vector<std::string> rooms = client->getRooms();
+    std::vector<std::string> rooms = client->getNonDeletedRooms();
     if(rooms.empty()) {
         EV << this->getFullName() << " - No rooms available" << endl;
         std::cout << this->getFullName() << " - No rooms available" << std::endl;
@@ -186,6 +174,8 @@ void ClientNetwork::handleEvent_ResendCreation() {
 
 void ClientNetwork::handleEvent_AskMessages() {
     std::list<AskMessage> messages = client->askMessages();
+    EV << this->getFullName() << " - Start asking for messages" << endl;
+    std::cout << this->getFullName() << " - Start asking for messages" << std::endl;
     for(AskMessage am : messages) {
         cMessage *cMsg = am.getCmessage();
         cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
@@ -236,6 +226,9 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
             std::cout << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << std::endl;
             cancelAndDelete(cMess);
         }
+    } else if(ap == ActionPerformed::ROOM_DELETED) {
+        EV << this->getFullName() << " - Room scheduled for deletion: " << msg->par("roomId").stringValue() << endl;
+        std::cout << this->getFullName() << " - Room scheduled for deletion: " << msg->par("roomId").stringValue() << std::endl;
     }
     return;
 }
@@ -245,7 +238,7 @@ void ClientNetwork::forwardMessage(cMessage *msg)
     if(msg->par("timeToLive").longValue() > 1) {
         msg->par("timeToLive").setLongValue(msg->par("timeToLive").longValue() - 1);
         forward(msg);
-        
+
         EV << this->getFullName() << " - Message forwarded: " << msg->getName() << " - Time to live: " << msg->par("timeToLive").longValue() << endl;
         std::cout << this->getFullName() << " - Message forwarded: " << msg->getName() << " - Time to live: " << msg->par("timeToLive").longValue() << std::endl;
     }
