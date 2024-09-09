@@ -23,7 +23,7 @@ ClientTree::ClientTree() : ClientNetwork() {}
 void ClientTree::initialize()
 {
     ClientNetwork::initialize();
-    this->timeToLive = 2*(ceil((getParentModule()->par("numClients").intValue()+1)/log(2)));
+    this->timeToLive = 2*(ceil(log(getParentModule()->par("numClients").intValue()+1)/log(2)));
 }
 
 void ClientTree::sendToAll(cMessage *msg)

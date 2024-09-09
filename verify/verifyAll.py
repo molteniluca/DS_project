@@ -1,5 +1,6 @@
 import configparser
 import os
+import threading
 
 def verifyFile(log_file_path):
     rooms = {}
@@ -115,7 +116,15 @@ def verifyFile(log_file_path):
                 if client not in rooms[room][1]:
                     print("Message: " + message + " in room: " + str(room) + " was displayed to " + client + " who is not in the room")
 
-
+def executeTest(config_name, r):
+    outFile = os.path.join(logPath, config_name + "_" + str(r) + ".log")
+    execFile = os.path.join(projectPath, "DS_project")
+    print()
+    print(f"Running configuration {config_name} with repetition {r}.")
+    os.system(f'{execFile} -u Cmdenv -f omnetpp.ini -c {config_name} -r {r} > {outFile}')
+    print(f"Checking log of configuration {config_name} with repetition {r}.")
+    verifyFile(outFile)
+    print()
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 projectPath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -140,11 +149,5 @@ for section in config.sections():
 # Print all configurations and their repeat values
 for config_name, repeat in config_repeats.items():
     for r in range(repeat):
-        outFile = os.path.join(logPath, config_name + "_" + str(r) + ".log")
-        execFile = os.path.join(projectPath, "DS_project")
-        print()
-        print(f"Running configuration {config_name} with repetition {r}.")
-        os.system(f'{execFile} -u Cmdenv -f omnetpp.ini -c {config_name} -r {r} > {outFile}')
-        print(f"Checking log of configuration {config_name} with repetition {r}.")
-        verifyFile(outFile)
-        print()
+        thread = threading.Thread(target=executeTest, args=(config_name, r))
+        thread.start()
