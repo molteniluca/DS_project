@@ -5,46 +5,48 @@ if len(sys.argv) > 1:
 else:
     log_file_path = "test.log"
 
-
+numPartitions = 0
 rooms = {}
 messagesSent = {}
-messagesReceived = {}
-room_deleted = {}
+messagesDisplayed = {}
+messagesAtRoomDeletion = {}
+messagesCausality = {} # Keeps track of the messages that the sender has seen before sending the message
 
-
-
-messagesCausality = {}
-# Test 3: Check that if a message is displayed, it has already seen all the messages the sender has seen
-def test3(client, room, message):
+# Check that if a message is displayed, it has already seen all the messages the sender has seen
+def testCausality(clientDisplaying, room, message):
     sender = message.split(",")[1].split(")")[0]
-    if sender not in messagesReceived:
-        return
-    if room not in messagesReceived[sender]:
-        return
+    if sender not in messagesDisplayed:
+        return # Sender has not displayed any messages in this room
+    if room not in messagesDisplayed[sender]:
+        return # Sender has not displayed any messages in this room
+    
     for message_saw_by_sender in messagesCausality[message]:
         sender_of_message_saw_by_sender = message_saw_by_sender.split(",")[1].split(")")[0]
-        if message_saw_by_sender not in messagesReceived[client][room] and sender_of_message_saw_by_sender != client:
-            print("Message: " + message + " in room: " + str(room) + " was displayed to " + client + " before " + message_saw_by_sender + " was displayed to " + sender_of_message_saw_by_sender)
+        
+        # If the sender is the same as the client displaying the message ignore
+        if sender_of_message_saw_by_sender != clientDisplaying:
+            if message_saw_by_sender not in messagesDisplayed[clientDisplaying][room]:
+                print("Message: " + message + " in room: " + str(room) + " was displayed to " + 
+                        clientDisplaying + " before " + message_saw_by_sender + " was displayed to " 
+                        + sender_of_message_saw_by_sender)
 
-
-def test3save(client, room, message):
-    if client not in messagesReceived:
+def saveMessagesCausality(client, room, message):
+    if client not in messagesDisplayed:
         messagesCausality[message] = []
         return
-    if room not in messagesReceived[client]:
+    if room not in messagesDisplayed[client]:
         messagesCausality[message] = []
         return
-    messagesCausality[message] = messagesReceived[client][room].copy()
-
+    messagesCausality[message] = messagesDisplayed[client][room].copy()
 
 def messageDisplayed(client, room, message):
-    if client not in messagesReceived:
-        messagesReceived[client] = {}
-    if room not in messagesReceived[client]:
-        messagesReceived[client][room] = []
-    messagesReceived[client][room].append(message)
+    if client not in messagesDisplayed:
+        messagesDisplayed[client] = {}
+    if room not in messagesDisplayed[client]:
+        messagesDisplayed[client][room] = []
+    messagesDisplayed[client][room].append(message)
     
-    test3(client, room, message)
+    testCausality(client, room, message)
     
 def messageSent(client, room, message):
     if room not in messagesSent:
@@ -52,14 +54,14 @@ def messageSent(client, room, message):
     if client not in messagesSent[room]:
         messagesSent[room][client] = []
     messagesSent[room][client].append(message)
-    test3save(client, room, message)
+    saveMessagesCausality(client, room, message)
     
 def roomCreated(roomName, client, clients):
     rooms[roomName]=(client,clients)
     
 def roomDeleted(roomName, admin):
     try:
-        msg1 = messagesReceived[admin][roomName]
+        msg1 = messagesDisplayed[admin][roomName]
     except KeyError:
         msg1 = []
     try:
@@ -67,7 +69,43 @@ def roomDeleted(roomName, admin):
     except KeyError:
         msg2 = []
     
-    room_deleted[roomName] = msg1+msg2
+    messagesAtRoomDeletion[roomName] = msg1+msg2
+
+# Check that all messages sent are received
+def testAllMessagesReceived():
+    for room in messagesSent:
+        for send_client in messagesSent[room]:
+            for message in messagesSent[room][send_client]:
+                for rec_client in rooms[room][1]:
+                    # Check that the message was received by all clients in the room except the sender
+                    if rec_client != send_client:
+                        try:
+                            # Check that the message was received by the client
+                            if message not in messagesDisplayed[rec_client][room]:
+                                # Check that the room was not deleted before the message was sent
+                                if room in messagesAtRoomDeletion:
+                                    if message in messagesAtRoomDeletion[room]:
+                                        print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
+                                else:
+                                    print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client + " but was not deleted")
+                        
+                        # rec_client has not displayed any messages in this room
+                        except KeyError: 
+                            # Check that the room was not deleted before the message was sent
+                            if room in messagesAtRoomDeletion:
+                                if message in messagesAtRoomDeletion[room]:
+                                    print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
+                            else:
+                                print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client + " but was not deleted")
+
+# Messages dont get displayed if the client is not in the room
+def messagesOnlyToRecipients():
+    for client in messagesDisplayed:
+        for room in messagesDisplayed[client]:
+            for message in messagesDisplayed[client][room]:
+                if client not in rooms[room][1]:
+                    print("Message: " + message + " in room: " + str(room) + " was displayed to " +
+                            client + " who is not in the room")
 
 
 with open(log_file_path, "r") as log_file:
@@ -96,35 +134,14 @@ with open(log_file_path, "r") as log_file:
             roomName = line.split("Deleting room: ")[1].strip()
             admin = line.split("-")[0].strip()
             roomDeleted(roomName, admin)
+        # parse line Partitioning network
+        if "Partitioning network" in line:
+            numPartitions = numPartitions + 1
 
+testAllMessagesReceived()
 
-## Test 1: Check that all messages sent are received
-for room in messagesSent:
-    for client in messagesSent[room]:
-        for message in messagesSent[room][client]:
-            for rec_client in rooms[room][1]:
-                try:
-                    if message not in messagesReceived[rec_client][room] and rec_client != client:
-                        if room in room_deleted:
-                            if message in room_deleted[room]:
-                                print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
-                        else:
-                            print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client + " but was not deleted")
-                except KeyError:
-                    if (rec_client != client):
-                        if room in room_deleted:
-                            if message in room_deleted[room]:
-                                print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
-                        else:
-                            print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client + " but was not deleted")
-
-# Test 2: Messages dont get displayed if the client is not in the room
-for client in messagesReceived:
-    for room in messagesReceived[client]:
-        for message in messagesReceived[client][room]:
-            if client not in rooms[room][1]:
-                print("Message: " + message + " in room: " + str(room) + " was displayed to " + client + " who is not in the room")
-
+messagesOnlyToRecipients()
 
 print("Num rooms: " + str(len(rooms)))
 print("Num messages sent: " + str(sum([len(messagesSent[room][client]) for room in messagesSent for client in messagesSent[room]])))
+print("Num partitions: " + str(numPartitions))
