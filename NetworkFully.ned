@@ -9,7 +9,7 @@ network NetworkFully extends Network
         for i = 0..numClients-1,
             for j = 0..numClients-1,
                 if (i != j) {
-                    client[i].out[j] --> { delay = parent.linkDelay; datarate = parent.linkDatarate; } --> client[j].in[i];
+                    client[i].out[j] --> { delay = parent.linkDelay; } --> client[j].in[i];
                 }
 }
 

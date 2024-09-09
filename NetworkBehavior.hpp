@@ -14,8 +14,7 @@ class NetworkBehavior : public cSimpleModule
         NetworkBehavior();
 
     protected:
-        double linkDelay,
-            linkDatarate;
+        double linkDelay;
             
         double partitionMinTime, partitionMaxTime,
             endPartitionMinTime, endPartitionMaxTime;

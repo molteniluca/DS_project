@@ -3,7 +3,6 @@ network Network
     parameters:
         int numClients = default(5);
         double linkDelay @unit(s) = default(10ms);
-        double linkDatarate @unit(bps) = default(10Mbps);
 
         double stopEventTime @unit(s) = default(2d); // Parameter to set the time to stop tsending room creation and chat messages before the simulation ends
 
