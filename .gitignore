@@ -14,5 +14,6 @@ results
 test.log
 out.txt
 verify/log/*
+verify/log_old/*
 
 .metadata
