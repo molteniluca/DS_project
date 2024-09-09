@@ -51,6 +51,8 @@ public:
 
     std::vector<int> getVectorClock() { return vectorClock; }    
 
+    std::vector<int> getDeletionVectorClock() { return deletionVectorClock; }
+
     std::vector<ChatMessage *> resendMessage(AskMessage *amsg);
 
 

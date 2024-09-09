@@ -218,13 +218,24 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
 
         std::vector<BaseMessage *> messages = result->second;
         for (BaseMessage *bm : messages) {
-            ChatMessage *cm = (ChatMessage *) bm;
-            cMessage *cMess = cm->getCmessage();
-            cMess->addPar("timeToLive").setLongValue(this->timeToLive);
-            sendToAll(cMess);
-            EV << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << endl;
-            std::cout << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << std::endl;
-            cancelAndDelete(cMess);
+            Message *msg = (Message *) bm;
+            if (msg->getType() == MessageType::CHAT) {
+                ChatMessage *cm = (ChatMessage *) bm;
+                cMessage *cMess = cm->getCmessage();
+                cMess->addPar("timeToLive").setLongValue(this->timeToLive);
+                sendToAll(cMess);
+                EV << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << endl;
+                std::cout << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << std::endl;
+                cancelAndDelete(cMess);
+            } else if (msg->getType() == MessageType::DELETE_ROOM) {
+                RoomDeletionMessage *rdm = (RoomDeletionMessage *) bm;
+                cMessage *cMess = rdm->getCmessage();
+                cMess->addPar("timeToLive").setLongValue(this->timeToLive);
+                sendToAll(cMess);
+                EV << this->getFullName() << " - Resending deletion: " << cMess->par("roomId").stringValue() << endl;
+                std::cout << this->getFullName() << " - Resending deletion: " << cMess->par("roomId").stringValue() << std::endl;
+                cancelAndDelete(cMess);
+            }
         }
     } else if(ap == ActionPerformed::ROOM_DELETED) {
         EV << this->getFullName() << " - Room scheduled for deletion: " << msg->par("roomId").stringValue() << endl;

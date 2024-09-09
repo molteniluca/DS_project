@@ -122,6 +122,11 @@ std::pair<ActionPerformed, std::vector<BaseMessage*>> * Client::handleMessage(Me
         std::vector<BaseMessage *> cm = std::vector<BaseMessage *>();
         std::vector<ChatMessage*> chatMessages = handleAskMessage(askMsg);
         cm.insert(cm.end(), chatMessages.begin(), chatMessages.end());
+
+        Room room = rooms[askMsg->getRoomId()];
+        if(room.isDeleted()) {
+            cm.push_back(new RoomDeletionMessage(askMsg->getRoomId(), room.getDeletionVectorClock()));
+        }
         return new std::pair(ActionPerformed::ANSWERED_ASK_FOR_MESSAGE, cm);
     }
     if(msg->getType() == MessageType::ACK) {
@@ -139,6 +144,8 @@ std::pair<ActionPerformed, std::vector<BaseMessage*>> * Client::handleMessage(Me
         RoomDeletionMessage* delMsg = dynamic_cast<RoomDeletionMessage*>(msg);
         if(rooms.find(delMsg->getRoomId()) == rooms.end())
             return new std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, std::vector<BaseMessage*>());
+        else
+            deleteRoom(delMsg);
         return new std::pair(ActionPerformed::ROOM_DELETED, std::vector<BaseMessage*>());
     }
 
@@ -148,7 +155,8 @@ std::pair<ActionPerformed, std::vector<BaseMessage*>> * Client::handleMessage(Me
 std::list<AskMessage> Client::askMessages() {
     std::list<AskMessage> askMessages = std::list<AskMessage>();
     for (auto& room : rooms) {
-        askMessages.push_back(*room.second.askMessages());
+        if (!room.second.isDeleted())
+            askMessages.push_back(*room.second.askMessages());
     }
     return askMessages;
 }
