@@ -60,6 +60,8 @@ void NetworkBehavior::handleNetworkEvent(cMessage *msg) {
             cMessage *partitionEvent = new cMessage(ne_toString(NetworkEvent::PARTITION).c_str());
             if(simTime() < this->stopEventTime) {
                 scheduleAt(simTime() + uniform(partitionMinTime, partitionMaxTime), partitionEvent);
+            } else {
+                cancelAndDelete(partitionEvent);
             }
             EV << "Ending partition" << endl;
             std::cout << "Ending partition" << std::endl;
