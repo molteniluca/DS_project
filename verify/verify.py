@@ -125,3 +125,6 @@ for client in messagesReceived:
             if client not in rooms[room][1]:
                 print("Message: " + message + " in room: " + str(room) + " was displayed to " + client + " who is not in the room")
 
+
+print("Num rooms: " + str(len(rooms)))
+print("Num messages sent: " + str(sum([len(messagesSent[room][client]) for room in messagesSent for client in messagesSent[room]])))
