@@ -67,7 +67,6 @@ void NetworkFullyBehavior::handleEvent_endPartition(std::set<std::tuple<std::str
         channel->par("delay").setDoubleValue(this->linkDelay);
         channel->par("datarate").setDoubleValue(this->linkDatarate);
         channel->par("ber").setDoubleValue(this->linkBER);
-        channel->setMode(cDatarateChannel::Mode::MULTI);
         
         cGate *gate0 = this->getParentModule()->getModuleByPath(modulePath0.c_str())->gate(gateName0.c_str(), index0);
         cGate *gate1 = this->getParentModule()->getModuleByPath(modulePath1.c_str())->gate(gateName1.c_str(), index1);
