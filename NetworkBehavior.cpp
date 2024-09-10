@@ -8,6 +8,7 @@ NetworkBehavior::NetworkBehavior() : cSimpleModule() {
     this->stopEventTime = -1;
     this->linkDelay = -1;
     this->linkDatarate = -1;
+    this->linkBER = -1;
 }
 
 void NetworkBehavior::initialize() {
@@ -20,6 +21,8 @@ void NetworkBehavior::initialize() {
     this->stopEventTime = getParentModule()->par("stopEventTime").doubleValue();
     this->linkDelay = getParentModule()->par("linkDelay").doubleValue();
     this->linkDatarate = getParentModule()->par("linkDatarate").doubleValue();
+
+    this->linkBER = getParentModule()->par("linkBER").doubleValue();
 
     cPacket *partitionEvent = new cPacket(ne_toString(NetworkEvent::PARTITION).c_str());
     scheduleAt(simTime() + uniform(1000, 2000), partitionEvent);

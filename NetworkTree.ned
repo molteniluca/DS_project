@@ -8,10 +8,10 @@ network NetworkTree extends Network
     connections allowunconnected:
         for i = 0..numClients-1,
         if (i > 0) {
-            client[i].out_parent --> { delay = parent.linkDelay; datarate = parent.linkDatarate; } --> client[int((i - 1) / 2)].in_left if i % 2 == 1;
-            client[i].out_parent --> { delay = parent.linkDelay; datarate = parent.linkDatarate; } --> client[int((i - 1) / 2)].in_right if i % 2 == 0;
-            client[int((i - 1) / 2)].out_left --> { delay = parent.linkDelay; datarate = parent.linkDatarate; } --> client[i].in_parent if i % 2 == 1;
-            client[int((i - 1) / 2)].out_right --> { delay = parent.linkDelay; datarate = parent.linkDatarate; } --> client[i].in_parent if i % 2 == 0;
+            client[i].out_parent --> { delay = parent.linkDelay; datarate = parent.linkDatarate; ber = parent.linkDatarate; } --> client[int((i - 1) / 2)].in_left if i % 2 == 1;
+            client[i].out_parent --> { delay = parent.linkDelay; datarate = parent.linkDatarate; ber = parent.linkDatarate; } --> client[int((i - 1) / 2)].in_right if i % 2 == 0;
+            client[int((i - 1) / 2)].out_left --> { delay = parent.linkDelay; datarate = parent.linkDatarate; ber = parent.linkDatarate; } --> client[i].in_parent if i % 2 == 1;
+            client[int((i - 1) / 2)].out_right --> { delay = parent.linkDelay; datarate = parent.linkDatarate; ber = parent.linkDatarate; } --> client[i].in_parent if i % 2 == 0;
         }
 
 }

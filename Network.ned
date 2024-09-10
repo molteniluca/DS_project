@@ -3,10 +3,11 @@ network Network
     parameters:
         int numClients = default(5);
         double linkDelay @unit(s) = default(1ms);
-        double linkDatarate @unit(bps) = default(1000000Mbps);
+        double linkDatarate @unit(bps) = default(0Mbps);
+        double linkBER = default(0.1);
 
-        int messagePacketSize @unit(B) = default(1B);
-        int controlPacketSize @unit(B) = default(1B);
+        int messagePacketSize @unit(B) = default(1kB);
+        int controlPacketSize @unit(B) = default(100B);
 
         double stopEventTime @unit(s) = default(2d); // Parameter to set the time to stop tsending room creation and chat messages before the simulation ends
 
@@ -20,7 +21,8 @@ network Network
 
         double resendCreationTime @unit(s) = default(1min);
 
-        double askMessagesTime @unit(s) = default(100min);
+        double askMessagesMinTime @unit(s) = default(100min);
+        double askMessagesMaxTime @unit(s) = default(2h);
 
         double deleteRoomMinTime @unit(s) = default(1h);
         double deleteRoomMaxTime @unit(s) = default(1h);

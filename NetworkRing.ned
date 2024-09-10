@@ -7,8 +7,8 @@ network NetworkRing extends Network
     
     connections allowunconnected:
         for i = 0..numClients-1 {
-            client[i].out_right --> { delay = parent.linkDelay; datarate = parent.linkDatarate; } --> client[(i+1)%numClients].in_left;
-            client[i].out_left --> { delay = parent.linkDelay; datarate = parent.linkDatarate; } --> client[(i-1+numClients)%numClients].in_right;
+            client[i].out_right --> { delay = parent.linkDelay; datarate = parent.linkDatarate; ber = parent.linkDatarate; } --> client[(i+1)%numClients].in_left;
+            client[i].out_left --> { delay = parent.linkDelay; datarate = parent.linkDatarate; ber = parent.linkDatarate; } --> client[(i-1+numClients)%numClients].in_right;
         }
 }
 

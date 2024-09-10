@@ -49,6 +49,7 @@ void NetworkTreeBehavior::handleEvent_endPartition(std::set<std::tuple<std::stri
         cChannel *channel = cDatarateChannel::create("channel");
         channel->par("delay").setDoubleValue(this->linkDelay);
         channel->par("datarate").setDoubleValue(this->linkDatarate);
+        channel->par("ber").setDoubleValue(this->linkBER);
 
         cGate *gate0 = this->getParentModule()->getModuleByPath(modulePath0.c_str())->gate(gateName0.c_str());
         cGate *gate1 = this->getParentModule()->getModuleByPath(modulePath1.c_str())->gate(gateName1.c_str());
