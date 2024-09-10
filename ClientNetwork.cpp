@@ -17,7 +17,8 @@ void ClientNetwork::initialize()
     this->sendMessageMaxTime = getParentModule()->par("sendMessageMaxTime").doubleValue();
     this->sendMessageProbability = getParentModule()->par("sendMessageProbability").doubleValue();
     this->resendCreationTime = getParentModule()->par("resendCreationTime").doubleValue();
-    this->askMessagesTime = getParentModule()->par("askMessagesTime").doubleValue();
+    this->askMessagesMinTime = getParentModule()->par("askMessagesMinTime").doubleValue();
+    this->askMessagesMaxTime = getParentModule()->par("askMessagesMaxTime").doubleValue();
     this->deleteRoomMinTime = getParentModule()->par("deleteRoomMinTime").doubleValue();
     this->deleteRoomMaxTime = getParentModule()->par("deleteRoomMaxTime").doubleValue();
     this->deleteRoomProbability = getParentModule()->par("deleteRoomProbability").doubleValue();
@@ -30,7 +31,7 @@ void ClientNetwork::initialize()
     scheduleAt(simTime() + uniform(createRoomMinTime, createRoomMaxTime), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
     scheduleAt(simTime() + uniform(sendMessageMinTime, sendMessageMaxTime), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
     scheduleAt(simTime() + resendCreationTime, new cMessage(ue_toString(UserEvent::RESEND_CREATION).c_str()));
-    scheduleAt(simTime() + askMessagesTime, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
+    scheduleAt(simTime() + uniform(askMessagesMinTime, askMessagesMaxTime), new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
 }
 
 void ClientNetwork::handleMessage(cMessage *msg)
@@ -85,7 +86,7 @@ void ClientNetwork::handleUserEvent(cMessage *msg)
             break;
 
         case UserEvent::ASK_MESSAGES:
-            scheduleAt(simTime() + askMessagesTime, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
+            scheduleAt(simTime() + uniform(askMessagesMinTime, askMessagesMaxTime), new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
             handleEvent_AskMessages();
             break;
 
@@ -220,6 +221,17 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
         sendToAll(cMsg);
         EV << this->getFullName() << " - Room created: " << msg->par("roomId").stringValue() << endl;
         std::cout << this->getFullName() << " - Room created: " << msg->par("roomId").stringValue() << std::endl;
+        EV << this->getFullName() << " - Ack sent: " << cMsg->par("roomId").stringValue() << endl;
+        std::cout << this->getFullName() << " - Ack sent: " << cMsg->par("roomId").stringValue() << std::endl;
+        cancelAndDelete(cMsg);
+    } else if(ap == ActionPerformed::DISCARDED_ALREADY_RECEIVED_ROOM_CREATION) {
+        std::vector<BaseMessage*> ackList = (std::vector<BaseMessage *>)result->second;
+        AckMessage *ack = (AckMessage *) ackList[0];
+        cMessage *cMsg = ack->getCmessage();
+        cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+        sendToAll(cMsg);
+        EV << this->getFullName() << " - Room already created: " << msg->par("roomId").stringValue() << endl;
+        std::cout << this->getFullName() << " - Room already created: " << msg->par("roomId").stringValue() << std::endl;
         EV << this->getFullName() << " - Ack sent: " << cMsg->par("roomId").stringValue() << endl;
         std::cout << this->getFullName() << " - Ack sent: " << cMsg->par("roomId").stringValue() << std::endl;
         cancelAndDelete(cMsg);

@@ -26,7 +26,7 @@ class ClientNetwork : public cSimpleModule
         double createRoomMinTime, createRoomMaxTime, createRoomProbability,
             sendMessageMinTime, sendMessageMaxTime, sendMessageProbability,
             resendCreationTime,
-            askMessagesTime,
+            askMessagesMinTime, askMessagesMaxTime,
             deleteRoomMinTime, deleteRoomMaxTime, deleteRoomProbability;
 
         virtual void initialize() override;

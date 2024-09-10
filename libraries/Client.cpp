@@ -97,8 +97,12 @@ std::pair<ActionPerformed, std::vector<BaseMessage*>> * Client::handleMessage(Me
         if(std::find(participants.begin(), participants.end(), userId) == participants.end()){
             return new std::pair(ActionPerformed::DISCARDED_NON_RECIPIENT_MESSAGE, std::vector<BaseMessage*>());
         }
-        if(rooms.find(roomMsg->getRoomId()) != rooms.end())
-            return new std::pair(ActionPerformed::DISCARDED_ALREADY_RECEIVED_MESSAGE, std::vector<BaseMessage*>());
+        if(rooms.find(roomMsg->getRoomId()) != rooms.end()) {
+            std::vector<BaseMessage*> ack = std::vector<BaseMessage*>();
+            Room room = rooms[roomMsg->getRoomId()];
+            ack.push_back(room.getAckMessage());
+            return new std::pair(ActionPerformed::DISCARDED_ALREADY_RECEIVED_ROOM_CREATION, ack);
+        }
         std::vector<BaseMessage*> ack = std::vector<BaseMessage*>();
         ack.push_back(handleRoomCreation(roomMsg));
         return new std::pair(ActionPerformed::CREATED_ROOM,ack);

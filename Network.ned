@@ -16,7 +16,8 @@ network Network
 
         double resendCreationTime @unit(s) = default(1min);
 
-        double askMessagesTime @unit(s) = default(10min);
+        double askMessagesMinTime @unit(s) = default(5min);
+        double askMessagesMaxTime @unit(s) = default(10min);
 
         double deleteRoomMinTime @unit(s) = default(1h);
         double deleteRoomMaxTime @unit(s) = default(12h);
