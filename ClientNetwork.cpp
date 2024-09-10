@@ -26,6 +26,8 @@ void ClientNetwork::initialize()
 
     this->client = new Client(std::string(this->getFullName()));
     this->timeToLive = getParentModule()->par("numClients").intValue();
+    this->controlPacketSize = getParentModule()->par("controlPacketSize").intValue();
+    this->messagePacketSize = getParentModule()->par("messagePacketSize").intValue();
 
     scheduleAt(simTime() + uniform(createRoomMinTime, createRoomMaxTime), new cMessage(ue_toString(UserEvent::CREATE_ROOM).c_str()));
     scheduleAt(simTime() + uniform(sendMessageMinTime, sendMessageMaxTime), new cMessage(ue_toString(UserEvent::SEND_MESSAGE).c_str()));
@@ -33,17 +35,19 @@ void ClientNetwork::initialize()
     scheduleAt(simTime() + askMessagesTime, new cMessage(ue_toString(UserEvent::ASK_MESSAGES).c_str()));
 }
 
-void ClientNetwork::handleMessage(cMessage *msg)
+void ClientNetwork::handleMessage(cMessage *cmsg)
 {
-    if(msg == nullptr) {
+
+    if(cmsg == nullptr) {
         return;
     }
 
-    if(msg->isSelfMessage()) {
-        handleUserEvent(msg);
-        delete msg;
+    if(cmsg->isSelfMessage()) {
+        handleUserEvent(cmsg);
+        delete cmsg;
         return;
     }
+    cPacket *msg = check_and_cast<cPacket *>(cmsg);
 
     handleReceivedMessage(msg);
 
@@ -114,8 +118,9 @@ void ClientNetwork::handleEvent_deleteFirstRoom()
     std::string roomId = rooms[0];
     RoomDeletionMessage *msg = client->getRoomDeletionMessage(roomId);
     client->deleteRoom(msg);
-    cMessage *cMsg = msg->getCmessage();
+    cPacket *cMsg = msg->getcPacket();
     cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+    cMsg->setBitLength(this->controlPacketSize);
     sendToAll(cMsg);
 
     EV << this->getFullName() << " - Deleting room: " << roomId << endl;
@@ -143,8 +148,9 @@ void ClientNetwork::handleEvent_RoomCreation()
     std::string roomId = "stanza(" + std::string(this->getFullName()) + ", " + std::to_string(this->personalRoomId++) + ")";
     RoomCreationMessage *msg = client->createRoom(roomId, members);
 
-    cMessage *cMsg = msg->getCmessage();
+    cPacket *cMsg = msg->getcPacket();
     cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+    cMsg->setBitLength(this->controlPacketSize);
     sendToAll(cMsg);
 
     EV << this->getFullName() << " - Sent room creation: " << roomId << " with: " << vectorOfStrings_to_String(members) << endl;
@@ -167,8 +173,9 @@ void ClientNetwork::handleEvent_SendMessage()
     std::string roomId = rooms[intuniform(0, rooms.size()-1)];
     ChatMessage *msg = client->getMessage("msg("+std::to_string(this->personalMessageId++)+","+getFullName()+")", roomId);
 
-    cMessage *cMsg = msg->getCmessage();
+    cPacket *cMsg = msg->getcPacket();
     cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+    cMsg->setBitLength(this->messagePacketSize);
     sendToAll(cMsg);
 
     EV << this->getFullName() << " - Sending message to room " << msg->getRoomId() << " - " << msg->getContent() << endl;
@@ -182,8 +189,9 @@ void ClientNetwork::handleEvent_SendMessage()
 void ClientNetwork::handleEvent_ResendCreation() {
     std::set<RoomCreationMessage *> creationMsgs = client->creationToResend();
     for(RoomCreationMessage * msg : creationMsgs) {
-        cMessage *cMsg = msg->getCmessage();
+        cPacket *cMsg = msg->getcPacket();
         cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+        cMsg->setBitLength(this->controlPacketSize);
         sendToAll(cMsg);
         EV << this->getFullName() << " - Resending room creation: " << cMsg->par("roomId").stringValue() << endl;
         std::cout << this->getFullName() << " - Resending room creation: " << cMsg->par("roomId").stringValue() << std::endl;
@@ -193,12 +201,13 @@ void ClientNetwork::handleEvent_ResendCreation() {
 }
 
 void ClientNetwork::handleEvent_AskMessages() {
-    std::list<AskMessage> messages = client->askMessages();
+    std::list<AskMessage> roomsAskMessages = client->askMessages();
     EV << this->getFullName() << " - Start asking for messages" << endl;
     std::cout << this->getFullName() << " - Start asking for messages" << std::endl;
-    for(AskMessage am : messages) {
-        cMessage *cMsg = am.getCmessage();
+    for(AskMessage am : roomsAskMessages) {
+        cPacket *cMsg = am.getcPacket();
         cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+        cMsg->setBitLength(this->controlPacketSize);
         sendToAll(cMsg);
 
         EV << this->getFullName() << " - Asked for message: " << vectorOfInts_to_String(am.getMissingVectorClock()) << " - Room: " << am.getRoomId() << endl;
@@ -208,15 +217,16 @@ void ClientNetwork::handleEvent_AskMessages() {
     }
 }
 
-void ClientNetwork::handleReceivedMessage(cMessage *msg)
+void ClientNetwork::handleReceivedMessage(cPacket *msg)
 {
     std::pair<ActionPerformed, std::vector<BaseMessage*>>  *result = client->handleMessage(Message::createMessage(*msg));
     ActionPerformed ap = result->first;
     if(ap == ActionPerformed::CREATED_ROOM) {
         std::vector<BaseMessage*> ackList = (std::vector<BaseMessage *>)result->second;
         AckMessage *ack = (AckMessage *) ackList[0];
-        cMessage *cMsg = ack->getCmessage();
+        cPacket *cMsg = ack->getcPacket();
         cMsg->addPar("timeToLive").setLongValue(this->timeToLive);
+        cMsg->setBitLength(this->controlPacketSize);
         sendToAll(cMsg);
         EV << this->getFullName() << " - Room created: " << msg->par("roomId").stringValue() << endl;
         std::cout << this->getFullName() << " - Room created: " << msg->par("roomId").stringValue() << std::endl;
@@ -241,16 +251,18 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
             Message *msg = (Message *) bm;
             if (msg->getType() == MessageType::CHAT) {
                 ChatMessage *cm = (ChatMessage *) bm;
-                cMessage *cMess = cm->getCmessage();
+                cPacket *cMess = cm->getcPacket();
                 cMess->addPar("timeToLive").setLongValue(this->timeToLive);
+                cMess->setBitLength(this->messagePacketSize);
                 sendToAll(cMess);
                 EV << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << endl;
                 std::cout << this->getFullName() << " - Replayed message: " << cMess->par("message").stringValue() << " - Room: " << cMess->par("roomId").stringValue() << std::endl;
                 cancelAndDelete(cMess);
             } else if (msg->getType() == MessageType::DELETE_ROOM) {
                 RoomDeletionMessage *rdm = (RoomDeletionMessage *) bm;
-                cMessage *cMess = rdm->getCmessage();
+                cPacket *cMess = rdm->getcPacket();
                 cMess->addPar("timeToLive").setLongValue(this->timeToLive);
+                cMess->setBitLength(this->controlPacketSize);
                 sendToAll(cMess);
                 EV << this->getFullName() << " - Resending deletion: " << cMess->par("roomId").stringValue() << endl;
                 std::cout << this->getFullName() << " - Resending deletion: " << cMess->par("roomId").stringValue() << std::endl;
@@ -264,7 +276,7 @@ void ClientNetwork::handleReceivedMessage(cMessage *msg)
     return;
 }
 
-void ClientNetwork::forwardMessage(cMessage *msg)
+void ClientNetwork::forwardMessage(cPacket *msg)
 {
     if(msg->par("timeToLive").longValue() > 1) {
         msg->par("timeToLive").setLongValue(msg->par("timeToLive").longValue() - 1);

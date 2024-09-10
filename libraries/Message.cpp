@@ -4,7 +4,7 @@
 
 #include "utils.hpp"
 
-Message* Message::createMessage(omnetpp::cMessage& msg) {
+Message* Message::createMessage(omnetpp::cPacket& msg) {
     std::string type = std::string(msg.par("type").stringValue());
     if (type == "message") {
         std::string senderId = std::string(msg.par("senderId").stringValue());
@@ -49,8 +49,8 @@ std::vector<std::string> RoomCreationMessage::getParticipants() const {
     return participants;
 }
 
-omnetpp::cMessage* RoomCreationMessage::getCmessage() const {
-    omnetpp::cMessage *msg = new omnetpp::cMessage(("creation of room " + roomId).c_str());
+omnetpp::cPacket* RoomCreationMessage::getcPacket() const {
+    omnetpp::cPacket *msg = new omnetpp::cPacket(("creation of room " + roomId).c_str());
     msg->addPar("senderId").setStringValue(adminId.c_str());
     msg->addPar("type").setStringValue("create_room");
     msg->addPar("roomId").setStringValue(roomId.c_str());
@@ -81,8 +81,8 @@ const std::vector<int>& ChatMessage::getVectorClock() const {
     return vectorClock;
 }
 
-omnetpp::cMessage* ChatMessage::getCmessage() const {
-    omnetpp::cMessage *msg = new omnetpp::cMessage(content.c_str());
+omnetpp::cPacket* ChatMessage::getcPacket() const {
+    omnetpp::cPacket *msg = new omnetpp::cPacket(content.c_str());
     msg->addPar("senderId").setStringValue(senderId.c_str());
     msg->addPar("type").setStringValue("message");
     msg->addPar("roomId").setStringValue(roomId.c_str());
@@ -106,8 +106,8 @@ std::string AskMessage::getRoomId() const {
     return roomId;
 }
 
-omnetpp::cMessage* AskMessage::getCmessage() const {
-    omnetpp::cMessage* msg = new omnetpp::cMessage(("ask message for room " + roomId).c_str());
+omnetpp::cPacket* AskMessage::getcPacket() const {
+    omnetpp::cPacket* msg = new omnetpp::cPacket(("ask message for room " + roomId).c_str());
     msg->addPar("type").setStringValue("ask");
     msg->addPar("roomId").setStringValue(roomId.c_str());
     msg->addPar("vectorClock").setStringValue(vectorOfInts_to_String(missingVectorClock).c_str());
@@ -128,8 +128,8 @@ std::string AckMessage::getRoomId() const {
     return roomId;
 }
 
-omnetpp::cMessage* AckMessage::getCmessage() const {
-    omnetpp::cMessage* msg = new omnetpp::cMessage(("ack message for room " + roomId).c_str());
+omnetpp::cPacket* AckMessage::getcPacket() const {
+    omnetpp::cPacket* msg = new omnetpp::cPacket(("ack message for room " + roomId).c_str());
     msg->addPar("type").setStringValue("ack");
     msg->addPar("userId").setStringValue(userId.c_str());
     msg->addPar("roomId").setStringValue(roomId.c_str());
@@ -155,8 +155,8 @@ const std::vector<int>& RoomDeletionMessage::getVectorClock() const {
     return vectorClock;
 }
 
-omnetpp::cMessage* RoomDeletionMessage::getCmessage() const {
-    omnetpp::cMessage* msg = new omnetpp::cMessage(("deletion of room " + roomId).c_str());
+omnetpp::cPacket* RoomDeletionMessage::getcPacket() const {
+    omnetpp::cPacket* msg = new omnetpp::cPacket(("deletion of room " + roomId).c_str());
     msg->addPar("type").setStringValue("delete_room");
     msg->addPar("roomId").setStringValue(roomId.c_str());
     msg->addPar("vectorClock").setStringValue(vectorOfInts_to_String(vectorClock).c_str());

@@ -12,8 +12,8 @@ class ClientTree : public ClientNetwork
 
     protected:
         virtual void initialize() override;
-        virtual void sendToAll(cMessage *msg) override;
-        virtual void forward(cMessage *msg) override;
+        virtual void sendToAll(cPacket *msg) override;
+        virtual void forward(cPacket *msg) override;
 };
 
 Define_Module(ClientTree);
@@ -26,9 +26,9 @@ void ClientTree::initialize()
     this->timeToLive = 2*(ceil(log(getParentModule()->par("numClients").intValue()+1)/log(2)));
 }
 
-void ClientTree::sendToAll(cMessage *msg)
+void ClientTree::sendToAll(cPacket *msg)
 {
-    cMessage *cMsg = msg->dup();
+    cPacket *cMsg = msg->dup();
     try{
         send(cMsg, "out_parent");
     } catch(cRuntimeError e) {
@@ -50,9 +50,9 @@ void ClientTree::sendToAll(cMessage *msg)
     return;
 }
 
-void ClientTree::forward(cMessage *msg)
+void ClientTree::forward(cPacket *msg)
 {
-    cMessage *cMsg = nullptr;
+    cPacket *cMsg = nullptr;
     if(std::string(msg->getArrivalGate()->getName()) == "in_parent") {
         cMsg = msg->dup();
         try{

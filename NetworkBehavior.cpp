@@ -21,11 +21,13 @@ void NetworkBehavior::initialize() {
     this->linkDelay = getParentModule()->par("linkDelay").doubleValue();
     this->linkDatarate = getParentModule()->par("linkDatarate").doubleValue();
 
-    cMessage *partitionEvent = new cMessage(ne_toString(NetworkEvent::PARTITION).c_str());
+    cPacket *partitionEvent = new cPacket(ne_toString(NetworkEvent::PARTITION).c_str());
     scheduleAt(simTime() + uniform(1000, 2000), partitionEvent);
 }
 
-void NetworkBehavior::handleMessage(cMessage *msg) {
+void NetworkBehavior::handleMessage(cMessage *cmsg) {
+    cPacket *msg = check_and_cast<cPacket *>(cmsg);
+
     if(msg == nullptr) {
         return;
     }
@@ -41,13 +43,13 @@ void NetworkBehavior::handleMessage(cMessage *msg) {
     return;
 }
 
-void NetworkBehavior::handleNetworkEvent(cMessage *msg) {
+void NetworkBehavior::handleNetworkEvent(cPacket *msg) {
     NetworkEvent ne = ne_fromString(msg->getName());
     std::set<std::tuple<std::string,std::string>> gates;
     switch(ne) {
         case NetworkEvent::PARTITION: {
             gates = handleEvent_partition();
-            cMessage *endPartitionEvent = new cMessage(ne_toString(NetworkEvent::END_PARTITION).c_str());
+            cPacket *endPartitionEvent = new cPacket(ne_toString(NetworkEvent::END_PARTITION).c_str());
             endPartitionEvent->addPar("gates").setStringValue(setOfTuplesOfStrings_to_String(gates).c_str());
             scheduleAt(simTime() + uniform(endPartitionMinTime, endPartitionMaxTime), endPartitionEvent);
             EV << "Partitioning network" << endl;
@@ -57,7 +59,7 @@ void NetworkBehavior::handleNetworkEvent(cMessage *msg) {
         case NetworkEvent::END_PARTITION: {
             gates = string_to_setOfTuplesOfStrings(msg->par("gates").stringValue());
             handleEvent_endPartition(gates);
-            cMessage *partitionEvent = new cMessage(ne_toString(NetworkEvent::PARTITION).c_str());
+            cPacket *partitionEvent = new cPacket(ne_toString(NetworkEvent::PARTITION).c_str());
             if(simTime() < this->stopEventTime) {
                 scheduleAt(simTime() + uniform(partitionMinTime, partitionMaxTime), partitionEvent);
             } else {

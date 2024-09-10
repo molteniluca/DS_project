@@ -11,8 +11,8 @@ class ClientFully : public ClientNetwork
 
     protected:
         virtual void initialize() override;
-        virtual void sendToAll(cMessage *msg) override;
-        virtual void forward(cMessage *msg) override;
+        virtual void sendToAll(cPacket *msg) override;
+        virtual void forward(cPacket *msg) override;
     
     private:
         int myIndex;
@@ -34,11 +34,11 @@ void ClientFully::initialize()
     this->timeToLive = 1;
 }
 
-void ClientFully::sendToAll(cMessage *msg)
+void ClientFully::sendToAll(cPacket *msg)
 {
     for(int i = 0; i < gateSize("out"); i++) {
         if(i != this->myIndex) {
-            cMessage *cMsg = msg->dup();
+            cPacket *cMsg = msg->dup();
             try{
                 send(cMsg, "out", i);
             } catch(cRuntimeError e) {
@@ -48,12 +48,12 @@ void ClientFully::sendToAll(cMessage *msg)
     }
 }
 
-void ClientFully::forward(cMessage *msg)
+void ClientFully::forward(cPacket *msg)
 {
     for(int i = 0; i < gateSize("out"); i++) {
         if(std::string(msg->getArrivalGate()->getFullName()) != "in" + std::to_string(i)) {
             if(i != this->myIndex) {
-                cMessage *cMsg = msg->dup();
+                cPacket *cMsg = msg->dup();
                 try{
                     send(cMsg, "out", i);
                 } catch(cRuntimeError e) {

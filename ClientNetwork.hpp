@@ -19,6 +19,8 @@ class ClientNetwork : public cSimpleModule
     protected:
         Client * client;
         int timeToLive;
+        int controlPacketSize;
+        int messagePacketSize;
         int personalRoomId; // Used to create unique room ids
         int personalMessageId; // Used to create unique message ids
         double stopEventTime;
@@ -32,8 +34,8 @@ class ClientNetwork : public cSimpleModule
         virtual void initialize() override;
         virtual void handleMessage(cMessage *msg) override;
 
-        virtual void sendToAll(cMessage *msg) = 0;
-        virtual void forward(cMessage *msg) = 0;
+        virtual void sendToAll(cPacket *msg) = 0;
+        virtual void forward(cPacket *msg) = 0;
 
         void handleUserEvent(cMessage *msg);
         void handleEvent_RoomCreation();
@@ -42,8 +44,8 @@ class ClientNetwork : public cSimpleModule
         void handleEvent_AskMessages();
         void handleEvent_deleteFirstRoom();
 
-        void handleReceivedMessage(cMessage *msg);
-        void forwardMessage(cMessage *msg);
+        void handleReceivedMessage(cPacket *msg);
+        void forwardMessage(cPacket *msg);
 };
 
 #endif // CLIENTNETWORK_HPP

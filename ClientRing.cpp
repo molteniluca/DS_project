@@ -11,8 +11,8 @@ class ClientRing : public ClientNetwork
 
     protected:
         virtual void initialize() override;
-        virtual void sendToAll(cMessage *msg) override;
-        virtual void forward(cMessage *msg) override;
+        virtual void sendToAll(cPacket *msg) override;
+        virtual void forward(cPacket *msg) override;
 };
 
 Define_Module(ClientRing);
@@ -25,9 +25,9 @@ void ClientRing::initialize()
     this->timeToLive = getParentModule()->par("numClients").intValue() / 2;
 }
 
-void ClientRing::sendToAll(cMessage *msg)
+void ClientRing::sendToAll(cPacket *msg)
 {
-    cMessage *cMsg = msg->dup();
+    cPacket *cMsg = msg->dup();
     try{
         send(cMsg, "out_left");
     } catch(cRuntimeError e) {
@@ -42,10 +42,10 @@ void ClientRing::sendToAll(cMessage *msg)
     }
 }
 
-void ClientRing::forward(cMessage *msg)
+void ClientRing::forward(cPacket *msg)
 {
     if(std::string(msg->getArrivalGate()->getName()) == "in_left") {
-        cMessage *cMsg = msg->dup();
+        cPacket *cMsg = msg->dup();
         try{
             send(cMsg, "out_right");
         } catch(cRuntimeError e) {
@@ -53,7 +53,7 @@ void ClientRing::forward(cMessage *msg)
         }
     }
     else if(std::string(msg->getArrivalGate()->getName()) == "in_right") {
-        cMessage *cMsg = msg->dup();
+        cPacket *cMsg = msg->dup();
         try{
             send(cMsg, "out_left");
         } catch(cRuntimeError e) {

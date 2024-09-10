@@ -23,7 +23,7 @@ class NetworkBehavior : public cSimpleModule
         virtual void initialize() override;
         virtual void handleMessage(cMessage *msg) override;
 
-        void handleNetworkEvent(cMessage *msg);
+        void handleNetworkEvent(cPacket *msg);
 
         virtual std::set<std::tuple<std::string,std::string>> handleEvent_partition() = 0;
         virtual void handleEvent_endPartition(std::set<std::tuple<std::string,std::string>> gates) = 0;

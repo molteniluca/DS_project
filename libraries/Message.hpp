@@ -19,10 +19,10 @@ class BaseMessage {
 
 class Message : public BaseMessage {
 public:
-    static Message* createMessage(omnetpp::cMessage& msg);
+    static Message* createMessage(omnetpp::cPacket& msg);
 
     virtual MessageType getType() const = 0;
-    virtual omnetpp::cMessage* getCmessage() const = 0;
+    virtual omnetpp::cPacket* getcPacket() const = 0;
 };
 
 class RoomCreationMessage : public Message {
@@ -33,7 +33,7 @@ public:
     std::string getRoomId() const;
     std::vector<std::string> getParticipants() const;
 
-    omnetpp::cMessage* getCmessage() const override;
+    omnetpp::cPacket* getcPacket() const override;
 
     MessageType getType() const override;
 
@@ -49,7 +49,7 @@ public:
 
     std::string getRoomId() const;
 
-    omnetpp::cMessage* getCmessage() const override;
+    omnetpp::cPacket* getcPacket() const override;
 
     MessageType getType() const override;
 
@@ -68,7 +68,7 @@ public:
     const std::string& getContent() const;
     const std::vector<int>& getVectorClock() const;
 
-    omnetpp::cMessage* getCmessage() const override;
+    omnetpp::cPacket* getcPacket() const override;
 
     MessageType getType() const override;
 
@@ -86,7 +86,7 @@ public:
     std::vector<int> getMissingVectorClock() const;
     std::string getRoomId() const;
 
-    omnetpp::cMessage* getCmessage() const override;
+    omnetpp::cPacket* getcPacket() const override;
 
     MessageType getType() const override;
 
@@ -102,7 +102,7 @@ public:
     std::string getUserId() const;
     std::string getRoomId() const;
 
-    omnetpp::cMessage* getCmessage() const override;
+    omnetpp::cPacket* getcPacket() const override;
 
     MessageType getType() const override;
 
