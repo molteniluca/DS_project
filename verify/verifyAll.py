@@ -8,6 +8,7 @@ def verifyFile(log_file_path):
     messagesDisplayed = {}
     messagesAtRoomDeletion = {}
     messagesCausality = {} # Keeps track of the messages that the sender has seen before sending the message
+    partitions = 0
     
     # Check that if a message is displayed, it has already seen all the messages the sender has seen
     def testCausality(clientDisplaying, room, message):
@@ -131,18 +132,24 @@ def verifyFile(log_file_path):
                 roomName = line.split("Deleting room: ")[1].strip()
                 admin = line.split("-")[0].strip()
                 roomDeleted(roomName, admin)
+            if "Partitioning network" in line:
+                partitions += 1
 
     testAllMessagesReceived()
     
     messagesOnlyToRecipients()
     
+    print("Number of partitions: " + str(partitions))
+    print("Total messages received: " + str(sum([len(messagesDisplayed[client][room]) for client in messagesDisplayed for room in messagesDisplayed[client]])))
+    print("Room number: " + str(len(rooms)))    
 
 def runTest(config_name, r):
     outFile = os.path.join(logPath, config_name + "_" + str(r) + ".log")
     execFile = os.path.join(projectPath, "DS_project")
     print()
     print(f"Running configuration {config_name} with repetition {r}.")
-    os.system(f'{execFile} -u Cmdenv -f omnetpp.ini -c {config_name} -r {r} > {outFile}')
+    if not os.path.exists(outFile):
+        os.system(f'{execFile} -u Cmdenv -f omnetpp.ini -c {config_name} -r {r} > {outFile}')
     print(f"Checking log of configuration {config_name} with repetition {r}.")
     verifyFile(outFile)
     print()
