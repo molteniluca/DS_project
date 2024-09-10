@@ -158,7 +158,7 @@ def runTest(config_name, r):
     if not os.path.exists(outFile):
         os.system(f'{execFile} -u Cmdenv -f omnetpp.ini -c {config_name} -r {r} > {outFile}')
     print(f"Checking log of configuration {config_name} with repetition {r}.")
-    verifyFile(outFile, f"{config_name} whit {r} clients")
+    verifyFile(outFile, f"{config_name}_rep={r}")
     print()
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
