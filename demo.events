@@ -1,1 +1,4 @@
-110050 Client1 -> client3,client4 
+client[4] - Sent room creation: stanza(client[4], 3) with: client[4],client[0],client[1],client[5],client[2]
+
+92000 client[2] - Sending message to room stanza(client[4], 3) - msg(657,client[2])
+92090 client[1] - Sending message to room stanza(client[4], 3) - msg(611,client[1])
