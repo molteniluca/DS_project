@@ -1,1 +1,10 @@
-110050 Client1 -> client3,client4 
+repetition 0:
+    30686s:
+    participants of room(client[5], 0) : client[5],client[1],client[3],client[2],client[0]
+    client[3] isolated
+    - client[3] - Sending message to room stanza(client[5], 0) - msg(114,client[3])
+    - client[1] - Sending message to room stanza(client[5], 0) - msg(114,client[1]) 
+    32240s
+    check in log that after partition ends:
+        client[3] display msg(114,client[1])
+        client[5],client[1],client[2],client[0] display msg(114,client[3])
