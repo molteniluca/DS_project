@@ -49,6 +49,13 @@ void ClientNetwork::handleMessage(cMessage *cmsg)
     }
     cPacket *msg = check_and_cast<cPacket *>(cmsg);
 
+    if(msg->hasBitError()) {
+        EV << this->getFullName() << " - Message with bit error: " << msg->getName() << endl;
+        std::cout << this->getFullName() << " - Message with bit error: " << msg->getName() << std::endl;
+        delete msg;
+        return;
+    }
+
     handleReceivedMessage(msg);
 
     forwardMessage(msg);

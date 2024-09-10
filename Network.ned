@@ -4,7 +4,7 @@ network Network
         int numClients = default(5);
         double linkDelay @unit(s) = default(1ms);
         double linkDatarate @unit(bps) = default(0Mbps);
-        double linkBER = default(0.1);
+        double linkBER = default(0);
 
         int messagePacketSize @unit(B) = default(1kB);
         int controlPacketSize @unit(B) = default(100B);
@@ -21,12 +21,11 @@ network Network
 
         double resendCreationTime @unit(s) = default(1min);
 
-        double askMessagesMinTime @unit(s) = default(100min);
-        double askMessagesMaxTime @unit(s) = default(2h);
+        double askMessagesTime @unit(s) = default(5min);
 
         double deleteRoomMinTime @unit(s) = default(1h);
-        double deleteRoomMaxTime @unit(s) = default(1h);
-        double deleteRoomProbability = default(1);
+        double deleteRoomMaxTime @unit(s) = default(12h);
+        double deleteRoomProbability = default(0.2);
 
         double partitionMinTime @unit(s) = default(5min);
         double partitionMaxTime @unit(s) = default(1h);
@@ -34,3 +33,4 @@ network Network
         double endPartitionMinTime @unit(s) = default(5min);
         double endPartitionMaxTime @unit(s) = default(1h);
 }
+
