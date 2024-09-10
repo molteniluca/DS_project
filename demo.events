@@ -4,7 +4,6 @@ repetition 0:
     client[3] isolated
     - client[3] - Sending message to room stanza(client[5], 0) - msg(114,client[3])
     - client[1] - Sending message to room stanza(client[5], 0) - msg(114,client[1]) 
-    38240s
-    check in log that after partition ends:
+    check in log that after partition ends (38240s):
         client[3] display msg(114,client[1])
         client[5],client[1],client[2],client[0] display msg(114,client[3])
