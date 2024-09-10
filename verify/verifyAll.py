@@ -2,7 +2,7 @@ import configparser
 import os
 import threading
 
-def verifyFile(log_file_path):
+def verifyFile(log_file_path, name):
     rooms = {}
     messagesSent = {}
     messagesDisplayed = {}
@@ -24,7 +24,7 @@ def verifyFile(log_file_path):
             # If the sender is the same as the client displaying the message ignore
             if sender_of_message_saw_by_sender != clientDisplaying:
                 if message_saw_by_sender not in messagesDisplayed[clientDisplaying][room]:
-                    print("Message: " + message + " in room: " + str(room) + " was displayed to " + 
+                    print(f"{name} - Message: " + message + " in room: " + str(room) + " was displayed to " + 
                           clientDisplaying + " before " + message_saw_by_sender + " was displayed to " 
                           + sender_of_message_saw_by_sender)
 
@@ -83,18 +83,18 @@ def verifyFile(log_file_path):
                                     # Check that the room was not deleted before the message was sent
                                     if room in messagesAtRoomDeletion:
                                         if message in messagesAtRoomDeletion[room]:
-                                            print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
+                                            print(f"{name} - Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
                                     else:
-                                        print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client + " but was not deleted")
+                                        print(f"{name} - Message: " + message + " in room: " + str(room) + " was not received by " + rec_client + " but was not deleted")
                             
                             # rec_client has not displayed any messages in this room
                             except KeyError: 
                                 # Check that the room was not deleted before the message was sent
                                 if room in messagesAtRoomDeletion:
                                     if message in messagesAtRoomDeletion[room]:
-                                        print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
+                                        print(f"{name} - Message: " + message + " in room: " + str(room) + " was not received by " + rec_client)
                                 else:
-                                    print("Message: " + message + " in room: " + str(room) + " was not received by " + rec_client + " but was not deleted")
+                                    print(f"{name} - Message: " + message + " in room: " + str(room) + " was not received by " + rec_client + " but was not deleted")
 
     # Messages dont get displayed if the client is not in the room
     def messagesOnlyToRecipients():
@@ -102,7 +102,7 @@ def verifyFile(log_file_path):
             for room in messagesDisplayed[client]:
                 for message in messagesDisplayed[client][room]:
                     if client not in rooms[room][1]:
-                        print("Message: " + message + " in room: " + str(room) + " was displayed to " +
+                        print(f"{name} - Message: " + message + " in room: " + str(room) + " was displayed to " +
                               client + " who is not in the room")
     
 
@@ -139,9 +139,16 @@ def verifyFile(log_file_path):
     
     messagesOnlyToRecipients()
     
-    print("Number of partitions: " + str(partitions))
-    print("Total messages received: " + str(sum([len(messagesDisplayed[client][room]) for client in messagesDisplayed for room in messagesDisplayed[client]])))
-    print("Room number: " + str(len(rooms)))    
+    print(f"{name} - Number of partitions: " + str(partitions))
+    print(f"{name} - Total messages received: " + str(sum([len(messagesDisplayed[client][room]) for client in messagesDisplayed for room in messagesDisplayed[client]])))
+    print(f"{name} - Room number: " + str(len(rooms)))
+    # Calculate the maximum number of messages in any room
+    max_messages = max(
+        sum(len(messagesSent[room][client]) for client in messagesSent[room])
+        for room in messagesSent
+    )
+    # Print the result
+    print(f"{name} - Max message in room: {max_messages}")
 
 def runTest(config_name, r):
     outFile = os.path.join(logPath, config_name + "_" + str(r) + ".log")
@@ -151,7 +158,7 @@ def runTest(config_name, r):
     if not os.path.exists(outFile):
         os.system(f'{execFile} -u Cmdenv -f omnetpp.ini -c {config_name} -r {r} > {outFile}')
     print(f"Checking log of configuration {config_name} with repetition {r}.")
-    verifyFile(outFile)
+    verifyFile(outFile, f"{config_name} whit {r} clients")
     print()
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
